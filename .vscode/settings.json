@@ -1,9 +1,12 @@
 {
   "cSpell.words": [
+    "nomicfoundation",
     "Reentrancy",
     "Reentrant",
     "SLOAD",
+    "TSTERC",
     "Unstake",
-    "unstaked"
+    "unstaked",
+    "vars"
   ]
 }

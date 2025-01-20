@@ -1,5 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
 import "dotenv/config"
 
 // Private keys are needed to interact with chains, most commonly for deploying
@@ -8,6 +9,7 @@ import "dotenv/config"
 // privileges, and should be stored in env vars not on repositories.
 const TESTNET_PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY
 const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
+const ALCHEMY_KEY = process.env.ALCHEMY_KEY
 
 // API keys for verifying contracts on chains.
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
@@ -15,22 +17,22 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 // Chain definitions.
 const mainnet = {
   chainId: 1,
-  rpc: "https://eth-mainnet.g.alchemy.com/v2/demo",
+  rpc: `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://etherscan.io",
 }
 const world = {
   chainId: 480,
-  rpc: "https://worldchain-mainnet.g.alchemy.com/public",
+  rpc: `https://worldchain-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://worldscan.org/",
 }
 const sepolia = {
   chainId: 11155111,
-  rpc: "https://eth-sepolia.g.alchemy.com/v2/demo",
+  rpc: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://sepolia.etherscan.io/",
 }
 const worldSepolia = {
   chainId: 4801,
-  rpc: "https://worldchain-sepolia.g.alchemy.com/public",
+  rpc: `https://worldchain-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://sepolia.worldscan.org/",
 
 }

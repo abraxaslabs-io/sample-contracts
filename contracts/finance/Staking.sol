@@ -3,7 +3,33 @@
  * @title Staking.sol.
  *
  * @notice Very simple staking contract.
- *         * Allows taking of a single ERC20, defined below as the stakedToken.
+ *
+ * @notice Functional Summary
+ *
+ *         * No privileged access (now ownable or access control).
+ *         * Allows taking of a single ERC20, defined below as the stakedToken, set in the constructor.
+ *         * Allows only a pre-determined range of durations in days, set in the constructor.
+ *         * Implements a minimum and maximum stake amount, set in the constructor.
+ *         * Stakers can make multiple separate stakes, each is tracked individually.
+ *         * Existing stakes cannot be added to.
+ *         * When the staked period has expired any caller can unstake; funds are returned to the address that made the stake.
+ *         * Stakes can be unstaked in batch (more than one stake unstaked in a transaction).
+ *         * View methods for allStakeOwners, allStakesForOwner and allStakes.
+ *
+ * @notice Approach
+ *
+ *         This contract is designed to be used with no or minimal off-chain architecture, i.e. no requirement to watch and
+ *         aggregate contract events. The view methods allow "reporting" and can be used directly in UIs (for example to
+ *         display all the stakes an owner has made, and provide the indexes needed to unstake them). To achieve this we have
+ *         made design choices that do not optimise for gas (for example storing an enumerable map of all owners). Rather the
+ *         contract stores all information necessary for ease of use, allowing for swift implementation in a simple UI.
+ *
+ *         If using this sample as the basis for a gas optimised implementation you would remove the owner list from storage and
+ *         rely instead on aggregating events in the UI. You would also remove detail from the Events emitted which duplicate
+ *         information on the txn receipt itself and/or aren't strictly required (but are provided here for ease of use). You
+ *         would also consider removing the reentrancy guard as the unstake method follows the check -> effects -> interaction
+ *         pattern.
+ *
  *
  * @author abraxas https://abraxaslabs.io
  *
@@ -183,7 +209,8 @@ contract Staking is IStaking, ReentrancyGuard {
   }
 
   /**
-   * @notice `stake`: A user stakes for the provided duration.
+   * @notice `stake`: A user stakes for the provided duration. The user must have first approved this contract
+   * on the stakedToken for an allowance equal to or greater than the amount being staked.
    *
    * @param amount_ The amount being staked.
    * @param duration_ The duration of the stake.
