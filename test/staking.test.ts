@@ -8,8 +8,10 @@ import { MockERC20, Staking } from "./fixtures/coreFixture"
 describe("Staking", function () {
   let addr1: Signer
   let addr2: Signer
+  let addr8: Signer
   let address1: AddressLike
   let address2: AddressLike
+  let address8: AddressLike
   let hhMockERC20: MockERC20
   let hhStaking: Staking
   let hhMockERC20Address: AddressLike
@@ -22,8 +24,10 @@ describe("Staking", function () {
     const fixture = await loadFixture(deployFixture)
     addr1 = fixture.addr1
     addr2 = fixture.addr2
+    addr8 = fixture.addr8
     address1 = fixture.address1
     address2 = fixture.address2
+    address8 = fixture.address8
     hhMockERC20 = fixture.hhMockERC20
     hhStaking = fixture.hhStaking
     hhMockERC20Address = fixture.hhMockERC20Address
@@ -44,6 +48,11 @@ describe("Staking", function () {
   function addDays(timestamp: bigint, days: number): number {
     const additionalSeconds = days * 86400
     return Number(timestamp) + additionalSeconds
+  }
+
+  async function advanceBlockTime(days: number) {
+    await ethers.provider.send("evm_increaseTime", [days * 86400])
+    await ethers.provider.send("evm_mine", [])
   }
 
   context("Deployment", function () {
@@ -119,8 +128,17 @@ describe("Staking", function () {
       })
 
       it("Can stake for minimum and valid duration", async () => {
+        const preOwnerBalance = await hhMockERC20.balanceOf(address1)
+        const preStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+
         await expect(hhStaking.connect(addr1).stake(minStake, 90)).to.not.be
           .reverted
+
+        const postOwnerBalance = await hhMockERC20.balanceOf(address1)
+        const postStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+
+        expect(postStakedBalance).to.equal(preStakedBalance + minStake)
+        expect(postOwnerBalance).to.equal(preOwnerBalance - minStake)
       })
 
       it("-> Stake recorded as expected", async () => {
@@ -232,8 +250,128 @@ describe("Staking", function () {
         //
       })
 
-      it("...", async () => {
+      it("allStakesForOwner", async () => {
+        const ownerStakes = await hhStaking.allStakesForOwner(address2)
+        const blockTime = await getCurrentBlockTime()
+
+        expect(ownerStakes.length).to.equal(1)
+        const s = ownerStakes[0]
+        expect(s.amount).to.equal(minStake * 5n)
+        expect(s.stakedTimestamp).to.equal(blockTime)
+        expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
+        expect(s.withdrawnTimestamp).to.equal(0)
+      })
+
+      it("allStakeOwners", async () => {
+        const owners = await hhStaking.allStakeOwners()
+        expect(owners.length).to.equal(2)
+        expect(owners[0]).to.equal(address1)
+        expect(owners[1]).to.equal(address2)
+      })
+
+      it("allStakes", async () => {
+        const allStakes = await hhStaking.allStakes()
+        expect(allStakes.length).to.equal(2)
+
+        let o = allStakes[0]
+        expect(o.owner).to.equal(address1)
+        expect(o.stakes.length).to.equal(5)
+        let s = o.stakes[0]
+        expect(s.amount).to.equal(minStake)
+        expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 90))
+        expect(s.withdrawnTimestamp).to.equal(0)
+        s = o.stakes[4]
+        expect(s.amount).to.equal(minStake * 5n)
+        expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
+        expect(s.withdrawnTimestamp).to.equal(0)
+        o = allStakes[1]
+        expect(o.owner).to.equal(address2)
+        expect(o.stakes.length).to.equal(1)
+        s = o.stakes[0]
+        expect(s.amount).to.equal(minStake * 5n)
+        expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
+        expect(s.withdrawnTimestamp).to.equal(0)
+      })
+    })
+
+    describe("Unstaking Tokens", function () {
+      before(async function () {
         //
+      })
+
+      it("Random cannot unstake before expiry", async () => {
+        await expect(
+          hhStaking.connect(addr8).unstake([
+            {
+              owner: address1,
+              index: 0,
+            },
+          ]),
+        ).to.be.revertedWith("Staking time has not yet expired")
+      })
+
+      it("Owner cannot unstake before expiry", async () => {
+        await expect(
+          hhStaking.connect(addr1).unstake([
+            {
+              owner: address1,
+              index: 0,
+            },
+          ]),
+        ).to.be.revertedWith("Staking time has not yet expired")
+      })
+
+      it("Can move forward 30 days", async () => {
+        await advanceBlockTime(30)
+      })
+
+      it("Random can unstake expired stake", async () => {
+        const preOwnerBalance = await hhMockERC20.balanceOf(address1)
+        const preStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+
+        // Unstake the 30 days stake
+        await expect(
+          hhStaking.connect(addr8).unstake([
+            {
+              owner: address1,
+              index: 3,
+            },
+          ]),
+        ).to.not.be.reverted
+
+        const postOwnerBalance = await hhMockERC20.balanceOf(address1)
+        const postStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+
+        expect(postStakedBalance).to.equal(preStakedBalance - minStake * 5n)
+        expect(postOwnerBalance).to.equal(preOwnerBalance + minStake * 5n)
+
+        const blockTime = await getCurrentBlockTime()
+        const ownerStakes = await hhStaking.allStakesForOwner(address1)
+        const s = ownerStakes[3]
+        expect(s.withdrawnTimestamp).to.equal(blockTime)
+      })
+
+      it("Cannot unstake expired stake twice", async () => {
+        // Unstake the 30 days stake
+        await expect(
+          hhStaking.connect(addr8).unstake([
+            {
+              owner: address1,
+              index: 3,
+            },
+          ]),
+        ).to.be.revertedWith("Already unstaked")
+      })
+
+      it("Cannot unstake longer stakes that remain before expiry", async () => {
+        await expect(
+          hhStaking.connect(addr1).unstake([
+            {
+              owner: address1,
+              index: 0,
+            },
+          ]),
+        ).to.be.revertedWith("Staking time has not yet expired")
       })
     })
   })

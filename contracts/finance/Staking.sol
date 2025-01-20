@@ -151,7 +151,7 @@ contract Staking is IStaking, ReentrancyGuard {
   /**
    * @notice allStakesForOwner: Returns all of the stakes for the queried owner. We have made the storage item internal
    * (rather than public) and provided a view method as it allows us to explicitly declare this method in the contracts
-   * interface. We believe this provides for a clearer, more explicit ABI and easier integration with other contract.
+   * interface. We believe this provides for a clearer, more explicit ABI and easier integration with other contracts.
    *
    * @param owner_ The owner we are querying.
    * @return stakesForOwner_ An array of stakes for this owner.
