@@ -4,6 +4,8 @@
  *
  * @notice Interface for Staking.sol.
  *
+ * @notice This sample contract is provided as-is, and had not been audited. Use at your own risk.
+ *
  * @author abraxas https://abraxaslabs.io
  *
  *         version 0.1.0

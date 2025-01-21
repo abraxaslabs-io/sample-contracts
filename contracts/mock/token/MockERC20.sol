@@ -3,6 +3,8 @@
 /**
  * @title MockERC20.sol. Mock ERC20 for us in testing
  *
+ * @notice This sample contract is provided as-is, and had not been audited. Use at your own risk.
+ *
  * @author abraxas https://abraxaslabs.io
  */
 
@@ -21,5 +23,9 @@ contract MockERC20 is ERC20 {
     for (uint256 i = 0; i < recipients_.length; i++) {
       _mint(recipients_[i], MINT_AMOUNT);
     }
+  }
+
+  function mint(uint256 amount_) external {
+    _mint(msg.sender, amount_);
   }
 }

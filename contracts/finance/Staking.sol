@@ -4,6 +4,8 @@
  *
  * @notice Very simple staking contract.
  *
+ * @notice This sample contract is provided as-is, and had not been audited. Use at your own risk.
+ *
  * @notice Functional Summary
  *
  *         * No privileged access (now ownable or access control).

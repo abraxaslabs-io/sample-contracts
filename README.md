@@ -1,11 +1,34 @@
-# staking
+# Abraxaslabs sample-contracts
+
+Sample contracts for different use cases. All provided under the MIT licence. Contracts have not been audited and are presented as-is;
+use at your own risk.
+
+- New tests should add core contracts to the fixture in `./fixture/coreFixtures`
+- Run unit tests with `npx hardhat test`
+- Deployment scripts are in `./scripts/deploy`
+
+# Contracts
+
+Staking
 
 Simple staking contract repository comprising:
 
 - A staking contract
 - Unit tests
 
-Comments are provided in the contract, unit tests and key config files to aid understanding of the underlying code and development process.
+Comments are provided throughout the contract, tests and config files to aid understanding of the underlying code and development process.
+
+Functional Summary
+
+- No privileged access (now ownable or access control).
+- Allows taking of a single ERC20, defined below as the stakedToken, set in the constructor.
+- Allows only a pre-determined range of durations in days, set in the constructor.
+- Implements a minimum and maximum stake amount, set in the constructor.
+- Stakers can make multiple separate stakes, each is tracked individually.
+- Existing stakes cannot be added to.
+- When the staked period has expired any caller can unstake; funds are returned to the address that made the stake.
+- Stakes can be unstaked in batch (more than one stake unstaked in a transaction).
+- View methods for allStakeOwners, allStakesForOwner and allStakes.
 
 # Solidity API
 
@@ -16,8 +39,8 @@ Comments are provided in the contract, unit tests and key config files to aid un
 `Stake`: Struct to hold the stake information, being amount, expiry and if it has been withdrawn. An array of these
 `Stake` structs is mapped to owner addresses (see ownerStakes below).
 
-_A **struct** is a custom data type that allows you to define complex data structures by grouping related variables.
-It is useful for creating more meaningful and organized data models within smart contracts._
+A **struct** is a custom data type that allows you to define complex data structures by grouping related variables.
+It is useful for creating more meaningful and organized data models within smart contracts.
 
 ```solidity
 struct Stake {
@@ -62,8 +85,8 @@ staked timestamp (which will also be available on the transaction object), and t
 staked and expiry timestamps). This provides a more data rich event where off-chain services do not need to collect additional data, at the
 cost of a higher amount of gas. On any L2 / L3 this would be entirely insignificant in terms of cost.
 
-_An **event** is a message emitted outside of the blockchain, and can be read and parsed by providers. They are used to keep track of
-on-chain events, for both reporting and other off-chain activities (for example calculating staking yields)._
+An **event** is a message emitted outside of the blockchain, and can be read and parsed by providers. They are used to keep track of
+on-chain events, for both reporting and other off-chain activities (for example calculating staking yields).
 
 ### Unstaked
 
@@ -190,8 +213,6 @@ If _any_ of the unstake requests in the batch fail the entire function reverts.
 
 ## Staking
 
-_the `contract` statement must define what else this contract implements, in this case it's own interface and ReentrancyGuard._
-
 ### stakedToken
 
 ```solidity
@@ -201,7 +222,7 @@ contract IERC20 stakedToken
 `stakedToken`: The ERC20 token that this contract will allow to be staked. This parameter
 has been set as immutable. That means that once it is set in the constructor it cannot be altered.
 
-\_**state variables** can be:
+**state variables** can be:
 
 - constant These are set at design time and cannot be set in the constructor or when the contract is live.
   Use these when you have a value that you know will never change, no matter where you use it (i.e.
@@ -255,8 +276,8 @@ mapping(address => struct IStaking.Stake[]) ownerStakes
 struct EnumerableSet.AddressSet owners
 ```
 
-_**enumerable sets** from open zeppelin function as enumerable mappings. We use this here to enable us to return a report of all
-stakes by owner._
+**enumerable sets** from open zeppelin function as enumerable mappings. We use this here to enable us to return a report of all
+stakes by owner.
 
 ### constructor
 
