@@ -21,9 +21,10 @@ interface IStaking {
   /// `Stake` structs is mapped to owner addresses (see ownerStakes below).
   struct Stake {
     uint256 amount;
-    uint80 stakedTimestamp;
-    uint80 expiryTimestamp;
-    uint80 withdrawnTimestamp;
+    uint64 durationInDays;
+    uint64 stakedTimestamp;
+    uint64 expiryTimestamp;
+    uint64 withdrawnTimestamp;
   }
   ///
   /// @notice `StakesWithOwner`: Struct to hold the owner and an array of owned stakes, used in a view method "report".
@@ -35,7 +36,7 @@ interface IStaking {
   /// @notice `UnstakeRequest`: A single unstake request, consisting of the owner and the index being unstaked.
   struct UnstakeRequest {
     address owner;
-    uint256 index;
+    uint64 index;
   }
 
   /// @dev An **event** is a message emitted outside of the blockchain, and can be read and parsed by providers. They are used to keep track of
@@ -46,24 +47,27 @@ interface IStaking {
   /// staked timestamp (which will also be available on the transaction object), and the duration of the stake (which is a function of the
   /// staked and expiry timestamps). This provides a more data rich event where off-chain services do not need to collect additional data, at the
   /// cost of a higher amount of gas. On any L2 / L3 this would be entirely insignificant in terms of cost.
+  /// withdrawnAt will always be 0, but it pads that last slot to a full bytes32 and means that the Stake and Unstake messages have the same format.
   event Staked(
     address indexed owner,
-    uint256 index,
+    uint96 index,
     uint256 amount,
-    uint256 stakedAt,
-    uint256 duration,
-    uint256 expiresAt
+    uint64 duration,
+    uint64 stakedAt,
+    uint64 expiresAt,
+    uint64 withdrawnAt
   );
 
   /// @notice `Unstaked` is the event emitted when a stake is unstaked. With this event, as with the `stake` event above, we are not optimising for
   /// low gas but emitting details we could reasonable exclude if gas cost was a key concern (in which case we would emit only the address and index).
   event Unstaked(
     address indexed owner,
-    uint256 index,
+    uint96 index,
     uint256 amount,
-    uint256 stakedAt,
-    uint256 expiresAt,
-    uint256 withdrawnAt
+    uint64 duration,
+    uint64 stakedAt,
+    uint64 expiresAt,
+    uint64 withdrawnAt
   );
 
   /**
@@ -117,7 +121,7 @@ interface IStaking {
    * @param amount_ The amount being staked.
    * @param duration_ The duration of the stake.
    */
-  function stake(uint256 amount_, uint256 duration_) external;
+  function stake(uint256 amount_, uint64 duration_) external;
 
   /**
    * @notice `unstake`: Unstake amounts, withdrawing funds to the original owners, if the

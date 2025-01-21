@@ -132,6 +132,11 @@ contract Staking is IStaking, ReentrancyGuard {
 
     // Iterate through the passed durations and mark then as allowed:
     for (uint256 i = 0; i < durations_.length; i++) {
+      // We store this as a uint64 so just check it will work (i.e. that we haven't asked for a
+      // duration that would take us past the 40th century...)
+      if (durations_[i] > type(uint64).max) {
+        revert("Invalid duration");
+      }
       allowedDurations[durations_[i]] = true;
     }
   }
@@ -217,7 +222,7 @@ contract Staking is IStaking, ReentrancyGuard {
    * @param amount_ The amount being staked.
    * @param duration_ The duration of the stake.
    */
-  function stake(uint256 amount_, uint256 duration_) external {
+  function stake(uint256 amount_, uint64 duration_) external {
     _preTransferValidation(duration_);
 
     uint256 transferredAmount = _transferStake(msg.sender, amount_);
@@ -311,7 +316,7 @@ contract Staking is IStaking, ReentrancyGuard {
   function _recordStake(
     address owner_,
     uint256 amount_,
-    uint256 duration_
+    uint64 duration_
   ) internal {
     // Add the address that is staking to the enumerable set if required:
     if (!owners.contains(owner_)) {
@@ -324,10 +329,10 @@ contract Staking is IStaking, ReentrancyGuard {
     // Set the staking expiry timestamp, which is the block time plus duration in days:
     uint256 expiresAt = stakedAt + (duration_ * 1 days);
 
-    // We hold dates in uint80 to pack three together in one 256 bit slot. There is no reasonable way
-    // that any of these dates can exceed a uint80 max value. Even if they did, the function would then
+    // We hold dates in uint64 to pack three together in one 256 bit slot with duration. There is no reasonable
+    // way that any of these can exceed a uint64 max value. Even if they did, the function would then
     // revert with an out of range error. But we can handle this remote possibility more gracefully:
-    if (stakedAt > type(uint80).max || expiresAt > type(uint80).max) {
+    if (stakedAt > type(uint64).max || expiresAt > type(uint64).max) {
       revert("Invalid dates");
     }
 
@@ -338,14 +343,23 @@ contract Staking is IStaking, ReentrancyGuard {
     // Record the stake:
     Stake memory newStake = Stake(
       amount_,
-      uint80(stakedAt),
-      uint80(expiresAt),
-      uint80(0)
+      duration_,
+      uint64(stakedAt),
+      uint64(expiresAt),
+      uint64(0)
     );
     ownerStakes[owner_].push(newStake);
 
     // Emit the details of this stake:
-    emit Staked(owner_, stakeIndex, amount_, stakedAt, duration_, expiresAt);
+    emit Staked(
+      owner_,
+      uint96(stakeIndex),
+      amount_,
+      duration_,
+      uint64(stakedAt),
+      uint64(expiresAt),
+      0
+    );
   }
 
   /**
@@ -354,7 +368,7 @@ contract Staking is IStaking, ReentrancyGuard {
    * @param owner_ The owner of the stake.
    * @param index_ The index in the owners array of stakes to unstake.
    */
-  function _unstake(address owner_, uint256 index_) internal nonReentrant {
+  function _unstake(address owner_, uint64 index_) internal nonReentrant {
     /// @dev We are making use of the OpenZeppelin reentrancy guard on this function. If we wished to
     /// avoid the gas cost of this we could instead implement a strict check -> effects -> interaction.
     /// We should, in best practice, use this pattern in *all* cases, even when we are using a guard.
@@ -392,7 +406,7 @@ contract Staking is IStaking, ReentrancyGuard {
 
     /// @dev **effects**:
     // Mark the record as withdrawn:
-    ownerStakes[owner_][index_].withdrawnTimestamp = uint80(block.timestamp);
+    ownerStakes[owner_][index_].withdrawnTimestamp = uint64(block.timestamp);
 
     /// @dev **interactions**:
     // Transfer the staked amount to the owner:
@@ -403,9 +417,10 @@ contract Staking is IStaking, ReentrancyGuard {
       owner_,
       index_,
       ownerStakes[owner_][index_].amount,
+      ownerStakes[owner_][index_].durationInDays,
       ownerStakes[owner_][index_].stakedTimestamp,
       ownerStakes[owner_][index_].expiryTimestamp,
-      block.timestamp
+      uint64(block.timestamp)
     );
   }
 }

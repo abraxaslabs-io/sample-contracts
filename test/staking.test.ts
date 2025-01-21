@@ -148,6 +148,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(1)
         const s = ownerStakes[0]
         expect(s.amount).to.equal(minStake)
+        expect(s.durationInDays).to.equal(90)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 90))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -165,6 +166,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(2)
         const s = ownerStakes[1]
         expect(s.amount).to.equal(maxStake)
+        expect(s.durationInDays).to.equal(90)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 90))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -182,6 +184,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(3)
         const s = ownerStakes[2]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(60)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -199,6 +202,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(4)
         const s = ownerStakes[3]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(30)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 30))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -216,6 +220,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(5)
         const s = ownerStakes[4]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(60)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -239,6 +244,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(1)
         const s = ownerStakes[0]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(60)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -257,6 +263,7 @@ describe("Staking", function () {
         expect(ownerStakes.length).to.equal(1)
         const s = ownerStakes[0]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(60)
         expect(s.stakedTimestamp).to.equal(blockTime)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
@@ -278,10 +285,12 @@ describe("Staking", function () {
         expect(o.stakes.length).to.equal(5)
         let s = o.stakes[0]
         expect(s.amount).to.equal(minStake)
+        expect(s.durationInDays).to.equal(90)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 90))
         expect(s.withdrawnTimestamp).to.equal(0)
         s = o.stakes[4]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(60)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
         o = allStakes[1]
@@ -289,6 +298,7 @@ describe("Staking", function () {
         expect(o.stakes.length).to.equal(1)
         s = o.stakes[0]
         expect(s.amount).to.equal(minStake * 5n)
+        expect(s.durationInDays).to.equal(60)
         expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
       })
@@ -441,7 +451,15 @@ describe("Staking", function () {
 
         await expect(hhStaking.connect(addr1).stake(minStake, 90))
           .to.emit(hhStaking, "Staked")
-          .withArgs(address1, 5, minStake, stake1StakedAt, 90, stake1ExpiresAt)
+          .withArgs(
+            address1,
+            5,
+            minStake,
+            90,
+            stake1StakedAt,
+            stake1ExpiresAt,
+            0,
+          )
       })
 
       it("Staking Event 2", async () => {
@@ -451,7 +469,15 @@ describe("Staking", function () {
 
         await expect(hhStaking.connect(addr2).stake(maxStake, 90))
           .to.emit(hhStaking, "Staked")
-          .withArgs(address2, 1, maxStake, stake2StakedAt, 90, stake2ExpiresAt)
+          .withArgs(
+            address2,
+            1,
+            maxStake,
+            90,
+            stake2StakedAt,
+            stake2ExpiresAt,
+            0,
+          )
       })
 
       it("Staking Event 3", async () => {
@@ -461,7 +487,15 @@ describe("Staking", function () {
 
         await expect(hhStaking.connect(addr1).stake(maxStake, 90))
           .to.emit(hhStaking, "Staked")
-          .withArgs(address1, 6, maxStake, stake3StakedAt, 90, stake3ExpiresAt)
+          .withArgs(
+            address1,
+            6,
+            maxStake,
+            90,
+            stake3StakedAt,
+            stake3ExpiresAt,
+            0,
+          )
       })
 
       it("Can move forward 90 days", async () => {
@@ -491,6 +525,7 @@ describe("Staking", function () {
             address1,
             5,
             minStake,
+            90,
             stake1StakedAt,
             stake1ExpiresAt,
             blockTime + 1,
@@ -500,6 +535,7 @@ describe("Staking", function () {
             address2,
             1,
             maxStake,
+            90,
             stake2StakedAt,
             stake2ExpiresAt,
             blockTime + 1,
@@ -509,6 +545,7 @@ describe("Staking", function () {
             address1,
             6,
             maxStake,
+            90,
             stake3StakedAt,
             stake3ExpiresAt,
             blockTime + 1,
