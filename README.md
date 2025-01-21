@@ -1,4 +1,4 @@
-# Abraxaslabs sample-contracts
+# Introduction
 
 Sample contracts for different use cases. All provided under the MIT licence. Contracts have not been audited and are presented as-is;
 use at your own risk.
@@ -9,7 +9,7 @@ use at your own risk.
 
 # Contracts
 
-Staking
+## Staking
 
 Simple staking contract repository comprising:
 
@@ -29,6 +29,10 @@ Functional Summary
 - When the staked period has expired any caller can unstake; funds are returned to the address that made the stake.
 - Stakes can be unstaked in batch (more than one stake unstaked in a transaction).
 - View methods for allStakeOwners, allStakesForOwner and allStakes.
+
+## MockERC20
+
+Very basic test ERC20 token.
 
 # Solidity API
 
