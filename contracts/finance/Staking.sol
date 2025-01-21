@@ -218,11 +218,11 @@ contract Staking is IStaking, ReentrancyGuard {
   function stake(uint256 amount_, uint256 duration_) external {
     _preTransferValidation(duration_);
 
-    uint256 transferredAmount = _transferStake(amount_);
+    uint256 transferredAmount = _transferStake(msg.sender, amount_);
 
     _postTransferValidation(transferredAmount);
 
-    _recordStake(transferredAmount, duration_);
+    _recordStake(msg.sender, transferredAmount, duration_);
   }
 
   /**
@@ -270,14 +270,16 @@ contract Staking is IStaking, ReentrancyGuard {
    * delivered below the amount requested. We check this to make sure we record the actual amount received,
    * not just assume that the amount requested has been staked.
    *
+   * @param owner_ The owner making the stake.
    * @param amount_ The amount being staked.
    */
   function _transferStake(
+    address owner_,
     uint256 amount_
   ) internal returns (uint256 transferredAmount_) {
     // Transfer the token across, recording how much actually arrives:
     uint256 preBalance = stakedToken.balanceOf(address(this));
-    stakedToken.transferFrom(msg.sender, address(this), amount_);
+    stakedToken.transferFrom(owner_, address(this), amount_);
     uint256 postBalance = stakedToken.balanceOf(address(this));
     return (postBalance - preBalance);
   }
@@ -300,12 +302,18 @@ contract Staking is IStaking, ReentrancyGuard {
   /**
    * @notice _recordStake: Add the stake record to storage.
    *
+   * @param owner_ The owner making the stake.
    * @param amount_ The amount being staked.
+   * @param duration_ The duration of the stake.
    */
-  function _recordStake(uint256 amount_, uint256 duration_) internal {
+  function _recordStake(
+    address owner_,
+    uint256 amount_,
+    uint256 duration_
+  ) internal {
     // Add the address that is staking to the enumerable set if required:
-    if (!owners.contains(msg.sender)) {
-      owners.add(msg.sender);
+    if (!owners.contains(owner_)) {
+      owners.add(owner_);
     }
 
     // Set the staked at timestamp, which is the current block time:
@@ -323,7 +331,7 @@ contract Staking is IStaking, ReentrancyGuard {
 
     // Record the index we will add this stake too, which is the current length of the
     // stake array in `ownerStakes` for this owner:
-    uint256 stakeIndex = ownerStakes[msg.sender].length;
+    uint256 stakeIndex = ownerStakes[owner_].length;
 
     // Record the stake:
     Stake memory newStake = Stake(
@@ -332,17 +340,10 @@ contract Staking is IStaking, ReentrancyGuard {
       uint80(expiresAt),
       uint80(0)
     );
-    ownerStakes[msg.sender].push(newStake);
+    ownerStakes[owner_].push(newStake);
 
     // Emit the details of this stake:
-    emit Staked(
-      msg.sender,
-      stakeIndex,
-      amount_,
-      stakedAt,
-      duration_,
-      expiresAt
-    );
+    emit Staked(owner_, stakeIndex, amount_, stakedAt, duration_, expiresAt);
   }
 
   /**
@@ -397,7 +398,7 @@ contract Staking is IStaking, ReentrancyGuard {
 
     // Emit the details of this unstake:
     emit Unstaked(
-      msg.sender,
+      owner_,
       index_,
       ownerStakes[owner_][index_].amount,
       ownerStakes[owner_][index_].stakedTimestamp,

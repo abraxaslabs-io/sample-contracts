@@ -171,7 +171,7 @@ describe("Staking", function () {
       })
 
       it("Can stake for other amount and valid duration", async () => {
-        await expect(hhStaking.connect(addr1).stake(minStake * 5n, 90)).to.not
+        await expect(hhStaking.connect(addr1).stake(minStake * 5n, 60)).to.not
           .be.reverted
       })
 
@@ -183,7 +183,7 @@ describe("Staking", function () {
         const s = ownerStakes[2]
         expect(s.amount).to.equal(minStake * 5n)
         expect(s.stakedTimestamp).to.equal(blockTime)
-        expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 90))
+        expect(s.expiryTimestamp).to.equal(addDays(s.stakedTimestamp, 60))
         expect(s.withdrawnTimestamp).to.equal(0)
       })
 
@@ -341,9 +341,11 @@ describe("Staking", function () {
 
         const postOwnerBalance = await hhMockERC20.balanceOf(address1)
         const postStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+        const postOperatorBalance = await hhMockERC20.balanceOf(address8)
 
         expect(postStakedBalance).to.equal(preStakedBalance - minStake * 5n)
         expect(postOwnerBalance).to.equal(preOwnerBalance + minStake * 5n)
+        expect(postOperatorBalance).to.equal(0)
 
         const blockTime = await getCurrentBlockTime()
         const ownerStakes = await hhStaking.allStakesForOwner(address1)
@@ -363,15 +365,154 @@ describe("Staking", function () {
         ).to.be.revertedWith("Already unstaked")
       })
 
-      it("Cannot unstake longer stakes that remain before expiry", async () => {
+      it("Cannot unstake stakes that remain before expiry", async () => {
+        await expect(
+          hhStaking.connect(addr8).unstake([
+            {
+              owner: address1,
+              index: 2,
+            },
+          ]),
+        ).to.be.revertedWith("Staking time has not yet expired")
+      })
+
+      it("Can move forward 30 days", async () => {
+        await advanceBlockTime(30)
+      })
+
+      it("Random can unstake expired stakes in batch", async () => {
+        const preOwner1Balance = await hhMockERC20.balanceOf(address1)
+        const preOwner2Balance = await hhMockERC20.balanceOf(address2)
+        const preStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+
+        // Unstake the 30 days stake
+        await expect(
+          hhStaking.connect(addr8).unstake([
+            {
+              owner: address1,
+              index: 2,
+            },
+            {
+              owner: address1,
+              index: 4,
+            },
+            {
+              owner: address2,
+              index: 0,
+            },
+          ]),
+        ).to.not.be.reverted
+
+        const postOwner1Balance = await hhMockERC20.balanceOf(address1)
+        const postOwner2Balance = await hhMockERC20.balanceOf(address2)
+        const postStakedBalance = await hhMockERC20.balanceOf(hhStaking)
+        const postOperatorBalance = await hhMockERC20.balanceOf(address8)
+
+        expect(postStakedBalance).to.equal(preStakedBalance - minStake * 15n)
+        expect(postOwner1Balance).to.equal(preOwner1Balance + minStake * 10n)
+        expect(postOwner2Balance).to.equal(preOwner2Balance + minStake * 5n)
+        expect(postOperatorBalance).to.equal(0)
+
+        const blockTime = await getCurrentBlockTime()
+        const ownerStakes = await hhStaking.allStakesForOwner(address1)
+        expect(ownerStakes[2].withdrawnTimestamp).to.equal(blockTime)
+        expect(ownerStakes[4].withdrawnTimestamp).to.equal(blockTime)
+        const ownerStakes2 = await hhStaking.allStakesForOwner(address2)
+        expect(ownerStakes2[0].withdrawnTimestamp).to.equal(blockTime)
+      })
+    })
+
+    describe("Events", function () {
+      before(async function () {
+        //
+      })
+
+      let stake1StakedAt: number
+      let stake2StakedAt: number
+      let stake3StakedAt: number
+      let stake1ExpiresAt: number
+      let stake2ExpiresAt: number
+      let stake3ExpiresAt: number
+
+      it("Staking Event 1", async () => {
+        const blockTime = await getCurrentBlockTime()
+        stake1StakedAt = blockTime + 1
+        stake1ExpiresAt = addDays(BigInt(blockTime), 90) + 1
+
+        await expect(hhStaking.connect(addr1).stake(minStake, 90))
+          .to.emit(hhStaking, "Staked")
+          .withArgs(address1, 5, minStake, stake1StakedAt, 90, stake1ExpiresAt)
+      })
+
+      it("Staking Event 2", async () => {
+        const blockTime = await getCurrentBlockTime()
+        stake2StakedAt = blockTime + 1
+        stake2ExpiresAt = addDays(BigInt(blockTime), 90) + 1
+
+        await expect(hhStaking.connect(addr2).stake(maxStake, 90))
+          .to.emit(hhStaking, "Staked")
+          .withArgs(address2, 1, maxStake, stake2StakedAt, 90, stake2ExpiresAt)
+      })
+
+      it("Staking Event 3", async () => {
+        const blockTime = await getCurrentBlockTime()
+        stake3StakedAt = blockTime + 1
+        stake3ExpiresAt = addDays(BigInt(blockTime), 90) + 1
+
+        await expect(hhStaking.connect(addr1).stake(maxStake, 90))
+          .to.emit(hhStaking, "Staked")
+          .withArgs(address1, 6, maxStake, stake3StakedAt, 90, stake3ExpiresAt)
+      })
+
+      it("Can move forward 90 days", async () => {
+        await advanceBlockTime(90)
+      })
+
+      it("Unstaking Event", async () => {
+        const blockTime = await getCurrentBlockTime()
         await expect(
           hhStaking.connect(addr1).unstake([
             {
               owner: address1,
-              index: 0,
+              index: 5,
+            },
+            {
+              owner: address2,
+              index: 1,
+            },
+            {
+              owner: address1,
+              index: 6,
             },
           ]),
-        ).to.be.revertedWith("Staking time has not yet expired")
+        )
+          .to.emit(hhStaking, "Unstaked")
+          .withArgs(
+            address1,
+            5,
+            minStake,
+            stake1StakedAt,
+            stake1ExpiresAt,
+            blockTime + 1,
+          )
+          .and.to.emit(hhStaking, "Unstaked")
+          .withArgs(
+            address2,
+            1,
+            maxStake,
+            stake2StakedAt,
+            stake2ExpiresAt,
+            blockTime + 1,
+          )
+          .and.to.emit(hhStaking, "Unstaked")
+          .withArgs(
+            address1,
+            6,
+            maxStake,
+            stake3StakedAt,
+            stake3ExpiresAt,
+            blockTime + 1,
+          )
       })
     })
   })
