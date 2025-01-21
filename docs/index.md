@@ -1,12 +1,3 @@
-# staking
-
-Simple staking contract repository comprising:
-
-- A staking contract
-- Unit tests
-
-Comments are provided in the contract, unit tests and key config files to aid understanding of the underlying code and development process.
-
 # Solidity API
 
 ## IStaking
@@ -57,7 +48,7 @@ event Staked(address owner, uint256 index, uint256 amount, uint256 stakedAt, uin
 ```
 
 `Staked` is the event emitted when a new stake is made. With this event, as with other aspects in this simple sample contract, we
-are _not_ optimising for low gas usage, but rather for functionality and convenience. This is expressed here with us emitting both the
+are *not* optimising for low gas usage, but rather for functionality and convenience. This is expressed here with us emitting both the
 staked timestamp (which will also be available on the transaction object), and the duration of the stake (which is a function of the
 staked and expiry timestamps). This provides a more data rich event where off-chain services do not need to collect additional data, at the
 cost of a higher amount of gas. On any L2 / L3 this would be entirely insignificant in terms of cost.
@@ -86,15 +77,15 @@ interface. We believe this provides for a clearer, more explicit ABI and easier 
 
 #### Parameters
 
-| Name       | Type    | Description                         |
-| ---------- | ------- | ----------------------------------- |
-| duration\_ | uint256 | The duration in days being queried. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| duration_ | uint256 | The duration in days being queried. |
 
 #### Return Values
 
-| Name        | Type | Description               |
-| ----------- | ---- | ------------------------- |
-| isAllowed\_ | bool | If a duration is allowed. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| isAllowed_ | bool | If a duration is allowed. |
 
 ### allStakesForOwner
 
@@ -108,15 +99,15 @@ interface. We believe this provides for a clearer, more explicit ABI and easier 
 
 #### Parameters
 
-| Name    | Type    | Description                |
-| ------- | ------- | -------------------------- |
-| owner\_ | address | The owner we are querying. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner_ | address | The owner we are querying. |
 
 #### Return Values
 
-| Name             | Type                    | Description                        |
-| ---------------- | ----------------------- | ---------------------------------- |
-| stakesForOwner\_ | struct IStaking.Stake[] | An array of stakes for this owner. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| stakesForOwner_ | struct IStaking.Stake[] | An array of stakes for this owner. |
 
 ### allStakeOwners
 
@@ -128,9 +119,9 @@ allStakeOwners: Returns all of owners that have staked amounts.
 
 #### Return Values
 
-| Name        | Type      | Description                      |
-| ----------- | --------- | -------------------------------- |
-| allOwners\_ | address[] | An array of all owner addresses. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allOwners_ | address[] | An array of all owner addresses. |
 
 ### allStakes
 
@@ -146,9 +137,9 @@ and aggregate a view of owner / all stakes off-chain.
 
 #### Return Values
 
-| Name        | Type                              | Description                                 |
-| ----------- | --------------------------------- | ------------------------------------------- |
-| allStakes\_ | struct IStaking.StakesWithOwner[] | An array of owners with their owned stakes. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allStakes_ | struct IStaking.StakesWithOwner[] | An array of owners with their owned stakes. |
 
 ### stake
 
@@ -160,10 +151,10 @@ function stake(uint256 amount_, uint256 duration_) external
 
 #### Parameters
 
-| Name       | Type    | Description                |
-| ---------- | ------- | -------------------------- |
-| amount\_   | uint256 | The amount being staked.   |
-| duration\_ | uint256 | The duration of the stake. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| amount_ | uint256 | The amount being staked. |
+| duration_ | uint256 | The duration of the stake. |
 
 ### unstake
 
@@ -180,13 +171,13 @@ period has expired. It allows for the possibility of "automated" withdrawals whe
 of the staking programme processes withdrawals on behalf of users. For this reason the `unstake`
 function takes batches of unstake requests.
 
-If _any_ of the unstake requests in the batch fail the entire function reverts.
+If *any* of the unstake requests in the batch fail the entire function reverts.
 
 #### Parameters
 
-| Name              | Type                             | Description                                                                                                 |
-| ----------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| unstakeRequests\_ | struct IStaking.UnstakeRequest[] | An array of unstake requests, these being the owner address and the index of the stake we want to withdraw. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| unstakeRequests_ | struct IStaking.UnstakeRequest[] | An array of unstake requests, these being the owner address and the index of the stake we want to withdraw. |
 
 ## Staking
 
@@ -201,17 +192,16 @@ contract IERC20 stakedToken
 `stakedToken`: The ERC20 token that this contract will allow to be staked. This parameter
 has been set as immutable. That means that once it is set in the constructor it cannot be altered.
 
-\_**state variables** can be:
-
-- constant These are set at design time and cannot be set in the constructor or when the contract is live.
-  Use these when you have a value that you know will never change, no matter where you use it (i.e.
-  it will be the same on all environments, testing, production etc). These do NOT occupy storage on
-  the chain and therefore do not incur a gas cost to read.
-- immutable These must be set in the constructor and cannot change in-life. Use these where you want to experiment
-  with different values in the build process (for testing etc) or in different versions of the contract.
-  These do NOT occupy storage on the chain and therefore do not incur a gas cost to read.
-- mutable These have neither the constant or immutable keyword, and ARE in storage on the chain. They can be altered
-  in-life IF you have coded a method to alter them. As they occupy storage they incur a cost to read.\_
+_**state variables** can be:
+- constant   These are set at design time and cannot be set in the constructor or when the contract is live.
+             Use these when you have a value that you know will never change, no matter where you use it (i.e.
+             it will be the same on all environments, testing, production etc). These do NOT occupy storage on
+             the chain and therefore do not incur a gas cost to read.
+- immutable  These must be set in the constructor and cannot change in-life. Use these where you want to experiment
+             with different values in the build process (for testing etc) or in different versions of the contract.
+             These do NOT occupy storage on the chain and therefore do not incur a gas cost to read.
+- mutable    These have neither the constant or immutable keyword, and ARE in storage on the chain. They can be altered
+             in-life IF you have coded a method to alter them. As they occupy storage they incur a cost to read._
 
 ### minStakeAmount
 
@@ -269,12 +259,12 @@ initial default values.
 
 #### Parameters
 
-| Name        | Type      | Description                                                                                                        |
-| ----------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
-| token\_     | address   | The address of the ERC20 token that this contract will stake.                                                      |
-| minStake\_  | uint256   | The minimum stake amount. Staked amounts less than this amount will not be accepted.                               |
-| maxStake\_  | uint256   | The maximum stake amount. Staked amount greater than this amount will not be accepted.                             |
-| durations\_ | uint256[] | An array of the allowed staking durations in days, for example [30, 60, 90] to allow taking for 30, 60 or 90 days. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| token_ | address | The address of the ERC20 token that this contract will stake. |
+| minStake_ | uint256 | The minimum stake amount. Staked amounts less than this amount will not be accepted. |
+| maxStake_ | uint256 | The maximum stake amount. Staked amount greater than this amount will not be accepted. |
+| durations_ | uint256[] | An array of the allowed staking durations in days, for example [30, 60, 90] to allow taking for 30, 60 or 90 days. |
 
 ### isAllowedDuration
 
@@ -288,15 +278,15 @@ interface. We believe this provides for a clearer, more explicit ABI and easier 
 
 #### Parameters
 
-| Name       | Type    | Description                         |
-| ---------- | ------- | ----------------------------------- |
-| duration\_ | uint256 | The duration in days being queried. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| duration_ | uint256 | The duration in days being queried. |
 
 #### Return Values
 
-| Name        | Type | Description               |
-| ----------- | ---- | ------------------------- |
-| isAllowed\_ | bool | If a duration is allowed. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| isAllowed_ | bool | If a duration is allowed. |
 
 ### allStakesForOwner
 
@@ -310,15 +300,15 @@ interface. We believe this provides for a clearer, more explicit ABI and easier 
 
 #### Parameters
 
-| Name    | Type    | Description                |
-| ------- | ------- | -------------------------- |
-| owner\_ | address | The owner we are querying. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner_ | address | The owner we are querying. |
 
 #### Return Values
 
-| Name             | Type                    | Description                        |
-| ---------------- | ----------------------- | ---------------------------------- |
-| stakesForOwner\_ | struct IStaking.Stake[] | An array of stakes for this owner. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| stakesForOwner_ | struct IStaking.Stake[] | An array of stakes for this owner. |
 
 ### allStakeOwners
 
@@ -330,9 +320,9 @@ allStakeOwners: Returns all of owners that have staked amounts.
 
 #### Return Values
 
-| Name        | Type      | Description                      |
-| ----------- | --------- | -------------------------------- |
-| allOwners\_ | address[] | An array of all owner addresses. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allOwners_ | address[] | An array of all owner addresses. |
 
 ### allStakes
 
@@ -348,9 +338,9 @@ and aggregate a view of owner / all stakes off-chain.
 
 #### Return Values
 
-| Name        | Type                              | Description                                 |
-| ----------- | --------------------------------- | ------------------------------------------- |
-| allStakes\_ | struct IStaking.StakesWithOwner[] | An array of owners with their owned stakes. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allStakes_ | struct IStaking.StakesWithOwner[] | An array of owners with their owned stakes. |
 
 ### stake
 
@@ -363,10 +353,10 @@ on the stakedToken for an allowance equal to or greater than the amount being st
 
 #### Parameters
 
-| Name       | Type    | Description                |
-| ---------- | ------- | -------------------------- |
-| amount\_   | uint256 | The amount being staked.   |
-| duration\_ | uint256 | The duration of the stake. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| amount_ | uint256 | The amount being staked. |
+| duration_ | uint256 | The duration of the stake. |
 
 ### unstake
 
@@ -383,13 +373,13 @@ period has expired. It allows for the possibility of "automated" withdrawals whe
 of the staking programme processes withdrawals on behalf of users. For this reason the `unstake`
 function takes batches of unstake requests.
 
-If _any_ of the unstake requests in the batch fail the entire function reverts.
+If *any* of the unstake requests in the batch fail the entire function reverts.
 
 #### Parameters
 
-| Name              | Type                             | Description                                                                                                 |
-| ----------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| unstakeRequests\_ | struct IStaking.UnstakeRequest[] | An array of unstake requests, these being the owner address and the index of the stake we want to withdraw. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| unstakeRequests_ | struct IStaking.UnstakeRequest[] | An array of unstake requests, these being the owner address and the index of the stake we want to withdraw. |
 
 ### receive
 
@@ -397,28 +387,28 @@ If _any_ of the unstake requests in the batch fail the entire function reverts.
 receive() external payable
 ```
 
-### \_preTransferValidation
+### _preTransferValidation
 
 ```solidity
 function _preTransferValidation(uint256 duration_) internal view
 ```
 
-\_preTransferValidation: Pre-transfer validation of the arguments passed in
+_preTransferValidation: Pre-transfer validation of  the arguments passed in
 on the stake call.
 
 #### Parameters
 
-| Name       | Type    | Description                |
-| ---------- | ------- | -------------------------- |
-| duration\_ | uint256 | The duration of the stake. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| duration_ | uint256 | The duration of the stake. |
 
-### \_transferStake
+### _transferStake
 
 ```solidity
 function _transferStake(address owner_, uint256 amount_) internal returns (uint256 transferredAmount_)
 ```
 
-\_transferStake: Transfer the stake amount from the owner, validating that the
+_transferStake: Transfer the stake amount from the owner, validating that the
 balance of this contract has increased by the required amount post-transfer. This is relevant
 for token contract that implement transfer taxation, or any functionality that will reduce the amount
 delivered below the amount requested. We check this to make sure we record the actual amount received,
@@ -426,56 +416,56 @@ not just assume that the amount requested has been staked.
 
 #### Parameters
 
-| Name     | Type    | Description                 |
-| -------- | ------- | --------------------------- |
-| owner\_  | address | The owner making the stake. |
-| amount\_ | uint256 | The amount being staked.    |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner_ | address | The owner making the stake. |
+| amount_ | uint256 | The amount being staked. |
 
-### \_postTransferValidation
+### _postTransferValidation
 
 ```solidity
 function _postTransferValidation(uint256 amount_) internal view
 ```
 
-\_postTransferValidation: Post-transfer validation of the arguments passed in
+_postTransferValidation: Post-transfer validation of  the arguments passed in
 on the stake call.
 
 #### Parameters
 
-| Name     | Type    | Description              |
-| -------- | ------- | ------------------------ |
-| amount\_ | uint256 | The amount being staked. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| amount_ | uint256 | The amount being staked. |
 
-### \_recordStake
+### _recordStake
 
 ```solidity
 function _recordStake(address owner_, uint256 amount_, uint256 duration_) internal
 ```
 
-\_recordStake: Add the stake record to storage.
+_recordStake: Add the stake record to storage.
 
 #### Parameters
 
-| Name       | Type    | Description                 |
-| ---------- | ------- | --------------------------- |
-| owner\_    | address | The owner making the stake. |
-| amount\_   | uint256 | The amount being staked.    |
-| duration\_ | uint256 | The duration of the stake.  |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner_ | address | The owner making the stake. |
+| amount_ | uint256 | The amount being staked. |
+| duration_ | uint256 | The duration of the stake. |
 
-### \_unstake
+### _unstake
 
 ```solidity
 function _unstake(address owner_, uint256 index_) internal
 ```
 
-\_unstake: Unstake the amount for an individual staking item.
+_unstake: Unstake the amount for an individual staking item.
 
 #### Parameters
 
-| Name    | Type    | Description                                         |
-| ------- | ------- | --------------------------------------------------- |
-| owner\_ | address | The owner of the stake.                             |
-| index\_ | uint256 | The index in the owners array of stakes to unstake. |
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| owner_ | address | The owner of the stake. |
+| index_ | uint256 | The index in the owners array of stakes to unstake. |
 
 ## MockERC20
 
@@ -490,3 +480,4 @@ uint256 MINT_AMOUNT
 ```solidity
 constructor(string name_, string symbol_, address[] recipients_) public
 ```
+

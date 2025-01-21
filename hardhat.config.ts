@@ -1,10 +1,11 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-verify";
+import { HardhatUserConfig } from "hardhat/config"
+import "@nomicfoundation/hardhat-toolbox"
+import "@nomicfoundation/hardhat-verify"
+import "solidity-docgen"
 import "dotenv/config"
 
 // Private keys are needed to interact with chains, most commonly for deploying
-// contracts using deployment scripts. These private keys should NOT be used for 
+// contracts using deployment scripts. These private keys should NOT be used for
 // anything other than deployments, they should not own anything or have any other
 // privileges, and should be stored in env vars not on repositories.
 const TESTNET_PRIVATE_KEY = process.env.TESTNET_PRIVATE_KEY
@@ -12,7 +13,7 @@ const MAINNET_PRIVATE_KEY = process.env.MAINNET_PRIVATE_KEY
 const ALCHEMY_KEY = process.env.ALCHEMY_KEY
 
 // API keys for verifying contracts on chains.
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
 
 // Chain definitions.
 const mainnet = {
@@ -34,7 +35,6 @@ const worldSepolia = {
   chainId: 4801,
   rpc: `https://worldchain-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://sepolia.worldscan.org/",
-
 }
 
 const config: HardhatUserConfig = {
@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
     outDir: "typechain",
     target: "ethers-v6",
   },
-  // Here you specify solidity defaults, the most common being the 
+  // Here you specify solidity defaults, the most common being the
   // compiler version and whether optimisation is enabled. Optimisation on
   // with 200 runs is a common default.
   solidity: {
@@ -119,11 +119,11 @@ const config: HardhatUserConfig = {
     }),
   },
 
-  // Gas reported runs with unit tests and produces an estimate of gas usage for 
+  // Gas reported runs with unit tests and produces an estimate of gas usage for
   // deployments and method calls.
   gasReporter: {
     enabled: true,
   },
-};
+}
 
-export default config;
+export default config
