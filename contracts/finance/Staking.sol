@@ -46,7 +46,7 @@ pragma solidity 0.8.28;
 // methods.
 import {IStaking} from "./IStaking.sol";
 /// @dev We import `IERC20` to type the token that this contract can hold.
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 /// @dev `EnumerableSet` provides a useful data type, see the comment at the `using` declaration below.
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 /// @dev We can use a `ReentrancyGuard` to protect against reentrancy attacks. See the `unstake` method for more details.
@@ -277,7 +277,7 @@ contract Staking is IStaking, ReentrancyGuard {
   }
 
   /**
-   * @notice _preTransferValidation: Pre-transfer validation of  the arguments passed in
+   * @notice _preTransferValidation: Pre-transfer validation of the arguments passed in
    * on the stake call.
    *
    * @param duration_ The duration of the stake.
