@@ -34,7 +34,7 @@ Functional Summary
 
 The below works with the sample MockERC20 implementation noted below.
 
-- Ethereum Sepolia: https://sepolia.etherscan.io/address/0x838214b2Ad3A32AD4a02cD0d436d2EFBdA7C88d2#code
+- Ethereum Sepolia: https://sepolia.etherscan.io/address/0x25495a8B0502411a0892C3E8fe9634B27316f848#readContract
 
 ## MockERC20
 
@@ -44,7 +44,7 @@ Very basic test ERC20 token.
 
 Mint yourself whatever you like using `mint(uint256 amount_)`.
 
-- Ethereum Sepolia: https://sepolia.etherscan.io/address/0x88974155fDD1d3264dfEE9Ea870ED32cbf2778DE#code
+- Ethereum Sepolia: https://sepolia.etherscan.io/address/0xc0eEa2f2c8e92b3ceAcb06FB50C146Eaa9810208#code
 
 # Solidity API
 
@@ -112,6 +112,14 @@ event Unstaked(address owner, uint256 index, uint256 amount, uint256 stakedAt, u
 
 `Unstaked` is the event emitted when a stake is unstaked. With this event, as with the `stake` event above, we are not optimising for
 low gas but emitting details we could reasonable exclude if gas cost was a key concern (in which case we would emit only the address and index).
+
+### allAllowedDurations
+
+```solidity
+function allAllowedDurations() external view returns (uint256[] allowedDurations_)
+```
+
+allAllowedDurations: Returns all allowed durations, purely as a convenience view function.
 
 ### isAllowedDuration
 
@@ -312,6 +320,14 @@ initial default values.
 | minStake\_  | uint256   | The minimum stake amount. Staked amounts less than this amount will not be accepted.                               |
 | maxStake\_  | uint256   | The maximum stake amount. Staked amount greater than this amount will not be accepted.                             |
 | durations\_ | uint256[] | An array of the allowed staking durations in days, for example [30, 60, 90] to allow taking for 30, 60 or 90 days. |
+
+### allAllowedDurations
+
+```solidity
+function allAllowedDurations() external view returns (uint256[] allowedDurations_)
+```
+
+allAllowedDurations: Returns all allowed durations, purely as a convenience view function.
 
 ### isAllowedDuration
 

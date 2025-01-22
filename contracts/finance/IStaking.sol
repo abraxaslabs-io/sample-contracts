@@ -71,6 +71,16 @@ interface IStaking {
   );
 
   /**
+   * @notice allAllowedDurations: Returns all allowed durations, purely as a convenience view function.
+   *
+   * @return allowedDurations_ All allowed durations.
+   */
+  function allAllowedDurations()
+    external
+    view
+    returns (uint256[] memory allowedDurations_);
+
+  /**
    * @notice isAllowedDuration: Returns if a duration is allowed. We have made the storage item internal
    * (rather than public) and provided a view method as it allows us to explicitly declare this method in the contracts
    * interface. We believe this provides for a clearer, more explicit ABI and easier integration with other contract.

@@ -13,9 +13,10 @@ It is useful for creating more meaningful and organized data models within smart
 ```solidity
 struct Stake {
   uint256 amount;
-  uint80 stakedTimestamp;
-  uint80 expiryTimestamp;
-  uint80 withdrawnTimestamp;
+  uint64 durationInDays;
+  uint64 stakedTimestamp;
+  uint64 expiryTimestamp;
+  uint64 withdrawnTimestamp;
 }
 ```
 
@@ -37,14 +38,14 @@ struct StakesWithOwner {
 ```solidity
 struct UnstakeRequest {
   address owner;
-  uint256 index;
+  uint64 index;
 }
 ```
 
 ### Staked
 
 ```solidity
-event Staked(address owner, uint256 index, uint256 amount, uint256 stakedAt, uint256 duration, uint256 expiresAt)
+event Staked(address owner, uint96 index, uint256 amount, uint64 duration, uint64 stakedAt, uint64 expiresAt, uint64 withdrawnAt)
 ```
 
 `Staked` is the event emitted when a new stake is made. With this event, as with other aspects in this simple sample contract, we
@@ -52,6 +53,7 @@ are *not* optimising for low gas usage, but rather for functionality and conveni
 staked timestamp (which will also be available on the transaction object), and the duration of the stake (which is a function of the
 staked and expiry timestamps). This provides a more data rich event where off-chain services do not need to collect additional data, at the
 cost of a higher amount of gas. On any L2 / L3 this would be entirely insignificant in terms of cost.
+withdrawnAt will always be 0, but it pads that last slot to a full bytes32 and means that the Stake and Unstake messages have the same format.
 
 _An **event** is a message emitted outside of the blockchain, and can be read and parsed by providers. They are used to keep track of
 on-chain events, for both reporting and other off-chain activities (for example calculating staking yields)._
@@ -59,11 +61,25 @@ on-chain events, for both reporting and other off-chain activities (for example 
 ### Unstaked
 
 ```solidity
-event Unstaked(address owner, uint256 index, uint256 amount, uint256 stakedAt, uint256 expiresAt, uint256 withdrawnAt)
+event Unstaked(address owner, uint96 index, uint256 amount, uint64 duration, uint64 stakedAt, uint64 expiresAt, uint64 withdrawnAt)
 ```
 
 `Unstaked` is the event emitted when a stake is unstaked. With this event, as with the `stake` event above, we are not optimising for
 low gas but emitting details we could reasonable exclude if gas cost was a key concern (in which case we would emit only the address and index).
+
+### allAllowedDurations
+
+```solidity
+function allAllowedDurations() external view returns (uint256[] allowedDurations_)
+```
+
+allAllowedDurations: Returns all allowed durations, purely as a convenience view function.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allowedDurations_ | uint256[] | All allowed durations. |
 
 ### isAllowedDuration
 
@@ -144,7 +160,7 @@ and aggregate a view of owner / all stakes off-chain.
 ### stake
 
 ```solidity
-function stake(uint256 amount_, uint256 duration_) external
+function stake(uint256 amount_, uint64 duration_) external
 ```
 
 `stake`: A user stakes for the provided duration.
@@ -154,7 +170,7 @@ function stake(uint256 amount_, uint256 duration_) external
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | amount_ | uint256 | The amount being staked. |
-| duration_ | uint256 | The duration of the stake. |
+| duration_ | uint64 | The duration of the stake. |
 
 ### unstake
 
@@ -221,16 +237,6 @@ uint256 maxStakeAmount
 `maxStakeAmount`: The maximum amount that can be staked, with amounts above this causing a revert. This parameter
 has been set as immutable. That means that once it is set in the constructor it cannot be altered.
 
-### allowedDurations
-
-```solidity
-mapping(uint256 => bool) allowedDurations
-```
-
-`allowedDurations`: Allowed staking durations in days. This assumes that this staking contract will allow more than one
-duration (e.g. 30, 60, 90 days). If you only have a single allowed duration it would use less gas to store the single
-allowed duration as an immutable variable.
-
 ### ownerStakes
 
 ```solidity
@@ -247,6 +253,16 @@ struct EnumerableSet.AddressSet owners
 
 _**enumerable sets** from open zeppelin function as enumerable mappings. We use this here to enable us to return a report of all
 stakes by owner._
+
+### _allowedDurations
+
+```solidity
+struct EnumerableSet.UintSet _allowedDurations
+```
+
+`allowedDurations`: Allowed staking durations in days. This assumes that this staking contract will allow more than one
+duration (e.g. 30, 60, 90 days). If you only have a single allowed duration it would use less gas to store the single
+allowed duration as an immutable variable.
 
 ### constructor
 
@@ -266,10 +282,24 @@ initial default values.
 | maxStake_ | uint256 | The maximum stake amount. Staked amount greater than this amount will not be accepted. |
 | durations_ | uint256[] | An array of the allowed staking durations in days, for example [30, 60, 90] to allow taking for 30, 60 or 90 days. |
 
+### allAllowedDurations
+
+```solidity
+function allAllowedDurations() external view returns (uint256[] allowedDurations_)
+```
+
+allAllowedDurations: Returns all allowed durations, purely as a convenience view function.
+
+#### Return Values
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| allowedDurations_ | uint256[] | All allowed durations. |
+
 ### isAllowedDuration
 
 ```solidity
-function isAllowedDuration(uint256 duration_) external view returns (bool isAllowed_)
+function isAllowedDuration(uint256 duration_) public view returns (bool isAllowed_)
 ```
 
 isAllowedDuration: Returns if a duration is allowed. We have made the storage item internal
@@ -345,7 +375,7 @@ and aggregate a view of owner / all stakes off-chain.
 ### stake
 
 ```solidity
-function stake(uint256 amount_, uint256 duration_) external
+function stake(uint256 amount_, uint64 duration_) external
 ```
 
 `stake`: A user stakes for the provided duration. The user must have first approved this contract
@@ -356,7 +386,7 @@ on the stakedToken for an allowance equal to or greater than the amount being st
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | amount_ | uint256 | The amount being staked. |
-| duration_ | uint256 | The duration of the stake. |
+| duration_ | uint64 | The duration of the stake. |
 
 ### unstake
 
@@ -439,7 +469,7 @@ on the stake call.
 ### _recordStake
 
 ```solidity
-function _recordStake(address owner_, uint256 amount_, uint256 duration_) internal
+function _recordStake(address owner_, uint256 amount_, uint64 duration_) internal
 ```
 
 _recordStake: Add the stake record to storage.
@@ -450,12 +480,12 @@ _recordStake: Add the stake record to storage.
 | ---- | ---- | ----------- |
 | owner_ | address | The owner making the stake. |
 | amount_ | uint256 | The amount being staked. |
-| duration_ | uint256 | The duration of the stake. |
+| duration_ | uint64 | The duration of the stake. |
 
 ### _unstake
 
 ```solidity
-function _unstake(address owner_, uint256 index_) internal
+function _unstake(address owner_, uint64 index_) internal
 ```
 
 _unstake: Unstake the amount for an individual staking item.
@@ -465,7 +495,7 @@ _unstake: Unstake the amount for an individual staking item.
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | owner_ | address | The owner of the stake. |
-| index_ | uint256 | The index in the owners array of stakes to unstake. |
+| index_ | uint64 | The index in the owners array of stakes to unstake. |
 
 ## MockERC20
 
@@ -479,5 +509,11 @@ uint256 MINT_AMOUNT
 
 ```solidity
 constructor(string name_, string symbol_, address[] recipients_) public
+```
+
+### mint
+
+```solidity
+function mint(uint256 amount_) external
 ```
 

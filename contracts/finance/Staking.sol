@@ -96,12 +96,12 @@ contract Staking is IStaking, ReentrancyGuard {
   /// fixed-size or dynamic, and they are useful for organizing and managing collections of data. The example below is a dynamic array in
   /// storage, it can be any length and is added to using the push command. Arrays can be in storage (on-chain) or memory (memory of the txn).
 
-  /// @notice `ownerStakes`: The stakes made by an owner held in an array of Stake structs.
-  mapping(address owner => Stake[] stakes) internal ownerStakes;
+  /// @notice `_ownerStakes`: The stakes made by an owner held in an array of Stake structs.
+  mapping(address owner => Stake[] stakes) internal _ownerStakes;
 
   /// @dev **enumerable sets** from open zeppelin function as enumerable mappings. We use this here to enable us to return a report of all
   /// stakes by owner.
-  EnumerableSet.AddressSet internal owners;
+  EnumerableSet.AddressSet internal _owners;
 
   /// @notice `allowedDurations`: Allowed staking durations in days. This assumes that this staking contract will allow more than one
   /// duration (e.g. 30, 60, 90 days). If you only have a single allowed duration it would use less gas to store the single
@@ -152,7 +152,7 @@ contract Staking is IStaking, ReentrancyGuard {
    * @return allowedDurations_ All allowed durations.
    */
   function allAllowedDurations()
-    public
+    external
     view
     returns (uint256[] memory allowedDurations_)
   {
@@ -184,7 +184,7 @@ contract Staking is IStaking, ReentrancyGuard {
   function allStakesForOwner(
     address owner_
   ) external view returns (Stake[] memory stakesForOwner_) {
-    return ownerStakes[owner_];
+    return _ownerStakes[owner_];
   }
 
   /**
@@ -197,7 +197,7 @@ contract Staking is IStaking, ReentrancyGuard {
     view
     returns (address[] memory allOwners_)
   {
-    return owners.values();
+    return _owners.values();
   }
 
   /**
@@ -214,13 +214,13 @@ contract Staking is IStaking, ReentrancyGuard {
     view
     returns (StakesWithOwner[] memory allStakes_)
   {
-    uint256 ownerCount = owners.length();
+    uint256 ownerCount = _owners.length();
 
     allStakes_ = new StakesWithOwner[](ownerCount);
 
     for (uint256 i = 0; i < ownerCount; i++) {
-      address owner = owners.at(i);
-      Stake[] storage stakes = ownerStakes[owner];
+      address owner = _owners.at(i);
+      Stake[] storage stakes = _ownerStakes[owner];
 
       Stake[] memory stakesCopy = new Stake[](stakes.length);
       for (uint256 j = 0; j < stakes.length; j++) {
@@ -337,8 +337,8 @@ contract Staking is IStaking, ReentrancyGuard {
     uint64 duration_
   ) internal {
     // Add the address that is staking to the enumerable set if required:
-    if (!owners.contains(owner_)) {
-      owners.add(owner_);
+    if (!_owners.contains(owner_)) {
+      _owners.add(owner_);
     }
 
     // Set the staked at timestamp, which is the current block time:
@@ -355,8 +355,8 @@ contract Staking is IStaking, ReentrancyGuard {
     }
 
     // Record the index we will add this stake too, which is the current length of the
-    // stake array in `ownerStakes` for this owner:
-    uint256 stakeIndex = ownerStakes[owner_].length;
+    // stake array in `_ownerStakes` for this owner:
+    uint256 stakeIndex = _ownerStakes[owner_].length;
 
     // Record the stake:
     Stake memory newStake = Stake(
@@ -366,7 +366,7 @@ contract Staking is IStaking, ReentrancyGuard {
       uint64(expiresAt),
       uint64(0)
     );
-    ownerStakes[owner_].push(newStake);
+    _ownerStakes[owner_].push(newStake);
 
     // Emit the details of this stake:
     emit Staked(
@@ -413,31 +413,31 @@ contract Staking is IStaking, ReentrancyGuard {
 
     /// @dev **checks**:
     // Check this hasn't already been unstaked.
-    if (ownerStakes[owner_][index_].withdrawnTimestamp != 0) {
+    if (_ownerStakes[owner_][index_].withdrawnTimestamp != 0) {
       revert("Already unstaked");
     }
 
     // Check the staking period has expired:
-    if (ownerStakes[owner_][index_].expiryTimestamp > block.timestamp) {
+    if (_ownerStakes[owner_][index_].expiryTimestamp > block.timestamp) {
       revert("Staking time has not yet expired");
     }
 
     /// @dev **effects**:
     // Mark the record as withdrawn:
-    ownerStakes[owner_][index_].withdrawnTimestamp = uint64(block.timestamp);
+    _ownerStakes[owner_][index_].withdrawnTimestamp = uint64(block.timestamp);
 
     /// @dev **interactions**:
     // Transfer the staked amount to the owner:
-    stakedToken.transfer(owner_, ownerStakes[owner_][index_].amount);
+    stakedToken.transfer(owner_, _ownerStakes[owner_][index_].amount);
 
     // Emit the details of this unstake:
     emit Unstaked(
       owner_,
       index_,
-      ownerStakes[owner_][index_].amount,
-      ownerStakes[owner_][index_].durationInDays,
-      ownerStakes[owner_][index_].stakedTimestamp,
-      ownerStakes[owner_][index_].expiryTimestamp,
+      _ownerStakes[owner_][index_].amount,
+      _ownerStakes[owner_][index_].durationInDays,
+      _ownerStakes[owner_][index_].stakedTimestamp,
+      _ownerStakes[owner_][index_].expiryTimestamp,
       uint64(block.timestamp)
     );
   }
