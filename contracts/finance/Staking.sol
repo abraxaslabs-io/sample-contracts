@@ -8,7 +8,7 @@
  *
  * @notice Functional Summary
  *
- *         * No privileged access (now ownable or access control).
+ *         * No privileged access (no ownable or access control).
  *         * Allows taking of a single ERC20, defined below as the stakedToken, set in the constructor.
  *         * Allows only a pre-determined range of durations in days, set in the constructor.
  *         * Implements a minimum and maximum stake amount, set in the constructor.
