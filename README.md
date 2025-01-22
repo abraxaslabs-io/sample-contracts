@@ -30,9 +30,21 @@ Functional Summary
 - Stakes can be unstaked in batch (more than one stake unstaked in a transaction).
 - View methods for allStakeOwners, allStakesForOwner and allStakes.
 
+### Example Implementation
+
+The below works with the sample MockERC20 implementation noted below.
+
+- Ethereum Sepolia: https://sepolia.etherscan.io/address/0x838214b2Ad3A32AD4a02cD0d436d2EFBdA7C88d2#code
+
 ## MockERC20
 
 Very basic test ERC20 token.
+
+### Example Implementation
+
+Mint yourself whatever you like using `mint(uint256 amount_)`.
+
+- Ethereum Sepolia: https://sepolia.etherscan.io/address/0x88974155fDD1d3264dfEE9Ea870ED32cbf2778DE#code
 
 # Solidity API
 

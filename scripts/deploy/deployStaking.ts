@@ -6,7 +6,7 @@ import { writeFileSync, unlinkSync } from "fs"
 
 // CONFIGURATION STARTS //
 //
-const token = "0x07c17f0319D68ba1218b138aD04c3f62f5A9B726"
+const token = "0x88974155fDD1d3264dfEE9Ea870ED32cbf2778DE"
 const minStake = BigInt(1e20).toString() // 100
 const maxStake = BigInt(1e21).toString() // 1000
 const durations = [30]
