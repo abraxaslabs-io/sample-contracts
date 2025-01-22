@@ -61,6 +61,9 @@ contract Staking is IStaking, ReentrancyGuard {
   /// allow this contract to be used 'standalone' without specific reliance on aggregating emitted events to know the status of all
   /// stakes. If you are targetting a low gas cost you would take a different approach, and not store this information on-chain.
   using EnumerableSet for EnumerableSet.AddressSet;
+  /// @dev We are using OpenZeppelins **EnumerableSet* to track the allowed durations. We could use a normal mapping, but by using this
+  /// structure we can also retrieve a convenient list of all allowed durations.
+  using EnumerableSet for EnumerableSet.UintSet;
 
   /// @dev **state variables** can be:
   /// - constant   These are set at design time and cannot be set in the constructor or when the contract is live.
@@ -89,11 +92,6 @@ contract Staking is IStaking, ReentrancyGuard {
   /// languages. It is used to efficiently store and retrieve data using keys, providing the mapped data when provided with the
   /// appropriate key.
 
-  /// @notice `allowedDurations`: Allowed staking durations in days. This assumes that this staking contract will allow more than one
-  /// duration (e.g. 30, 60, 90 days). If you only have a single allowed duration it would use less gas to store the single
-  /// allowed duration as an immutable variable.
-  mapping(uint256 durationInDays => bool allowed) internal allowedDurations;
-
   /// @dev An **array**, signified by [], is a data structure that stores multiple values of the same type in a single variable. Arrays can be
   /// fixed-size or dynamic, and they are useful for organizing and managing collections of data. The example below is a dynamic array in
   /// storage, it can be any length and is added to using the push command. Arrays can be in storage (on-chain) or memory (memory of the txn).
@@ -104,6 +102,11 @@ contract Staking is IStaking, ReentrancyGuard {
   /// @dev **enumerable sets** from open zeppelin function as enumerable mappings. We use this here to enable us to return a report of all
   /// stakes by owner.
   EnumerableSet.AddressSet internal owners;
+
+  /// @notice `allowedDurations`: Allowed staking durations in days. This assumes that this staking contract will allow more than one
+  /// duration (e.g. 30, 60, 90 days). If you only have a single allowed duration it would use less gas to store the single
+  /// allowed duration as an immutable variable.
+  EnumerableSet.UintSet internal _allowedDurations;
 
   /**
    * @notice constructor: The constructor of a contract runs once when the contract is instantiated. It is used to setup
@@ -137,8 +140,23 @@ contract Staking is IStaking, ReentrancyGuard {
       if (durations_[i] > type(uint64).max) {
         revert("Invalid duration");
       }
-      allowedDurations[durations_[i]] = true;
+      if (!_allowedDurations.contains(durations_[i])) {
+        _allowedDurations.add(durations_[i]);
+      }
     }
+  }
+
+  /**
+   * @notice allAllowedDurations: Returns all allowed durations, purely as a convenience view function.
+   *
+   * @return allowedDurations_ All allowed durations.
+   */
+  function allAllowedDurations()
+    public
+    view
+    returns (uint256[] memory allowedDurations_)
+  {
+    return _allowedDurations.values();
   }
 
   /**
@@ -151,8 +169,8 @@ contract Staking is IStaking, ReentrancyGuard {
    */
   function isAllowedDuration(
     uint256 duration_
-  ) external view returns (bool isAllowed_) {
-    return allowedDurations[duration_];
+  ) public view returns (bool isAllowed_) {
+    return _allowedDurations.contains(duration_);
   }
 
   /**
@@ -265,7 +283,7 @@ contract Staking is IStaking, ReentrancyGuard {
    * @param duration_ The duration of the stake.
    */
   function _preTransferValidation(uint256 duration_) internal view {
-    if (!allowedDurations[duration_]) {
+    if (!isAllowedDuration(duration_)) {
       revert("Invalid duration in days");
     }
   }

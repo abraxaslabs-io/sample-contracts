@@ -256,6 +256,14 @@ describe("Staking", function () {
         //
       })
 
+      it("allAllowedDurations", async () => {
+        const durations = await hhStaking.allAllowedDurations()
+        expect(durations.length).to.equal(3)
+        expect(durations[0]).to.equal(30)
+        expect(durations[1]).to.equal(60)
+        expect(durations[2]).to.equal(90)
+      })
+
       it("allStakesForOwner", async () => {
         const ownerStakes = await hhStaking.allStakesForOwner(address2)
         const blockTime = await getCurrentBlockTime()
