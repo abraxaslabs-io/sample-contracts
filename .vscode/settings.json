@@ -4,10 +4,12 @@
     "Reentrancy",
     "Reentrant",
     "SLOAD",
+    "struct",
     "TSTERC",
     "Unstake",
     "unstaked",
     "Unstaking",
     "vars"
-  ]
+  ],
+  "cSpell.ignoreWords": ["ISBT"]
 }
