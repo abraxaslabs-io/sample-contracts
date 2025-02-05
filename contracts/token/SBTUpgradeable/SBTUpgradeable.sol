@@ -2,7 +2,7 @@
 /**
  * @title SBTUpgradeable.sol.
  *
- * @notice A simple SBT (soul bound token) that is upgradeable
+ * @notice A SBT (soul bound token) that is upgradeable
  *
  * @notice This sample contract is provided as-is, and had not been audited. Use at your own risk.
  *
@@ -52,7 +52,6 @@ import {ISBTUpgradeable} from "./ISBTUpgradeable.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-/// @dev the `contract` statement must define what else this contract implements, in this case it's own interface and ReentrancyGuard.
 contract SBTUpgradeable is
   AccessControlEnumerableUpgradeable,
   ERC721EnumerableUpgradeable,
@@ -61,15 +60,26 @@ contract SBTUpgradeable is
 {
   using Strings for uint256;
 
+  /// @dev User roles to determine function specific access rights:
   bytes32 public constant ADMIN_ROLE = keccak256("SBT_ADMIN");
   bytes32 public constant UPGRADE_ROLE = keccak256("SBT_UPGRADE");
   bytes32 public constant SUPER_USER_ROLE = keccak256("SBT_SUPER_USER");
 
+  /// @dev Storage location to avoid memory corruption on upgrade:
   bytes32 private constant storageLocation =
     0xa01c1ac3789f0242b5fc9c53b42f156686ebc36edc918201803f217ae7382200; // keccak256(abi.encode(uint256(keccak256("SBT")) - 1)) & ~bytes32(uint256(0xff));
 
   /**
    * @dev initialize: Set initial configuration.
+   *
+   * @param name_ The name of the token
+   * @param symbol_ The symbol of the token
+   * @param baseURI_ The base URI for metadata
+   * @param individualURI_ If tokens have an individual URI (true) or not (false)
+   * @param owner_ Address for the owner role
+   * @param upgradeAdmin_ Address for the upgrade admin role
+   * @param adminAddresses_ Array of addresses to set as admins
+   * @param superUserAddresses_ Array of addresses to set as super users
    */
   function initialize(
     string calldata name_,
@@ -106,15 +116,17 @@ contract SBTUpgradeable is
 
   /**
    * @dev version Returns the version of the contract.
+   *
    * @return version_ A string representing the version.
    */
-  function version() external pure returns (string memory version_) {
+  function version() external pure virtual returns (string memory version_) {
     version_ = "1.0";
     return (version_);
   }
 
   /**
    * @dev nextTokenId Returns the next tokenId
+   *
    * @return id_ The next tokenId
    */
   function nextTokenId() external view returns (uint256 id_) {
@@ -124,6 +136,7 @@ contract SBTUpgradeable is
   /**
    * @dev individualURI: Returns the value of individualURI, which controls
    * behaviour of tokenURI()
+   *
    * @return individualURI_ The value of individualURI.
    */
   function individualURI() external view returns (bool individualURI_) {
@@ -133,6 +146,7 @@ contract SBTUpgradeable is
   /**
    * @dev upgradeApproved: Returns the value of upgradeApproved, which controls
    * whether the UPGRADE_ADMIN can upgrade the contract.
+   *
    * @return upgradeApproved_ The value of upgradeApproved.
    */
   function upgradeApproved() external view returns (bool upgradeApproved_) {
@@ -141,6 +155,7 @@ contract SBTUpgradeable is
 
   /**
    * @dev baseURI: Returns the value of _baseURI,
+   *
    * @return baseURI_ The value of _baseURI.
    */
   function baseURI() external view returns (string memory baseURI_) {
@@ -149,6 +164,7 @@ contract SBTUpgradeable is
 
   /**
    * @dev setURI: Allows the owner to set the URI for the token metadata.
+   *
    * @param newURI_ The new URI for the token metadata.
    */
   function setURI(string memory newURI_) external onlyRole(ADMIN_ROLE) {
@@ -161,6 +177,7 @@ contract SBTUpgradeable is
    * @dev setIndividualURI: Allows the operator to specify if URIs should be specific for each
    * NFT or a single URI applies to all items. This is useful for a period of time when all
    * NFTs share the same metadata / image.
+   *
    * @param individualURI_ A boolean for whether NFTs have individual images.
    */
   function setIndividualURI(bool individualURI_) external onlyRole(ADMIN_ROLE) {
@@ -173,6 +190,7 @@ contract SBTUpgradeable is
    * @dev setUpgradeApproved: Allows the owner (holder of the DEFAULT_ADMIN_ROLE)
    * to set the upgradeApproved flag. This allows a holder of the UPGRADE_ROLE
    * to upgrade the contract.
+   *
    * @param upgradeApproved_ A boolean for whether an upgrade is approved.
    */
   function setUpgradeApproved(
@@ -183,6 +201,11 @@ contract SBTUpgradeable is
     emit UpgradeApprovedUpdated(oldUpgradeApproved, upgradeApproved_);
   }
 
+  /**
+   * @dev batchMint: Mint tokens to a batch of addresses
+   *
+   * @param recipients_ An array of addresses.
+   */
   function batchMint(
     address[] memory recipients_
   ) external onlyRole(ADMIN_ROLE) {
@@ -198,6 +221,11 @@ contract SBTUpgradeable is
     emit BatchMintComplete(recipients_.length);
   }
 
+  /**
+   * @dev batchBurn: Burn a batch of tokens
+   *
+   * @param ids_ An array of token Ids.
+   */
   function batchBurn(uint256[] memory ids_) external onlyRole(ADMIN_ROLE) {
     for (uint256 i = 0; i < ids_.length; i++) {
       _burn(ids_[i]);
@@ -206,6 +234,11 @@ contract SBTUpgradeable is
     emit BatchBurnComplete(ids_.length);
   }
 
+  /**
+   * @dev batchTransfer: Transfer a batch of tokens
+   *
+   * @param transfers_ An array of transfer objects
+   */
   function batchTransfer(
     SBTTransfer[] calldata transfers_
   ) external onlyRole(ADMIN_ROLE) {
@@ -217,94 +250,109 @@ contract SBTUpgradeable is
   }
 
   /**
-   * @dev See {IERC721Metadata-tokenURI}.
+   * @dev tokenURI: Returns the URI for a token
+   *
+   * @param tokenId_ The token Id.
+   * @return tokenURI_ The token URI.
    */
   function tokenURI(
-    uint256 tokenId
+    uint256 tokenId_
   ) public view override returns (string memory tokenURI_) {
-    _requireOwned(tokenId);
+    _requireOwned(tokenId_);
 
     tokenURI_ = _baseURI();
 
     if (_storage().individualURI) {
-      tokenURI_ = string.concat(tokenURI_, "/", tokenId.toString());
+      tokenURI_ = string.concat(tokenURI_, "/", tokenId_.toString());
     }
 
     return (tokenURI_);
   }
 
   /**
-   * @dev Prevents setting approvals for operators as part of soulbound mechanism
+   * @dev setApprovalForAll: Set approval, but only for authorised users.
+   *
+   * @param operator_ The operator
+   * @param approved_ If the operator is approved
    */
   function setApprovalForAll(
     address operator_,
     bool approved_
-  ) public virtual override(ERC721Upgradeable, IERC721) {
-    if (
-      !hasRole(ADMIN_ROLE, msg.sender) && !hasRole(SUPER_USER_ROLE, msg.sender)
-    ) {
-      revert("Insufficient authority");
-    }
+  ) public override(ERC721Upgradeable, IERC721) {
+    _checkTransferRoles();
     super.setApprovalForAll(operator_, approved_);
   }
 
   /**
-   * @dev Burns `tokenId`. See {ERC721-_burn}.
+   * @dev approve: Set approval for one token, but only for authorised users.
    *
-   * Requirements:
-   *
-   * - The caller must own `tokenId` or be an approved operator.
-   */
-  function burn(uint256 tokenId) public virtual {
-    // Setting an "auth" arguments enables the `_isAuthorized` check which verifies that the token exists
-    // (from != 0). Therefore, it is not needed to verify that the return value is not 0 here.
-    _update(address(0), tokenId, _msgSender());
-  }
-
-  /**
-   * @dev Prevents setting approvals for operators as part of soulbound mechanism
+   * @param to_ The operator
+   * @param tokenId_ The token Id
    */
   function approve(
     address to_,
     uint256 tokenId_
   ) public override(ERC721Upgradeable, IERC721) {
-    if (
-      !hasRole(ADMIN_ROLE, msg.sender) && !hasRole(SUPER_USER_ROLE, msg.sender)
-    ) {
-      revert("Insufficient authority");
-    }
+    _checkTransferRoles();
     super.approve(to_, tokenId_);
   }
 
+  /**
+   * @dev burn: Burns `tokenId`. See {ERC721-_burn}.
+   *
+   * @param tokenId_ The token Id
+   * Requirements:
+   * - The caller must own `tokenId` or be an approved operator.
+   */
+  function burn(uint256 tokenId_) external {
+    // Setting an "auth" arguments enables the `_isAuthorized` check which verifies that the token exists
+    // (from != 0). Therefore, it is not needed to verify that the return value is not 0 here.
+    _update(address(0), tokenId_, _msgSender());
+  }
+
+  /**
+   * @dev supportsInterface: Returns if this contract supports an interface
+   *
+   * @param interfaceId The interface Id.
+   * @param supported_ If the interface is supported.
+   */
   function supportsInterface(
     bytes4 interfaceId
   )
     public
     view
     override(ERC721EnumerableUpgradeable, AccessControlEnumerableUpgradeable)
-    returns (bool)
+    returns (bool supported_)
   {
     return super.supportsInterface(interfaceId);
   }
 
+  /**
+   * @dev _update: Update token details. Override is provided here to restrict to only
+   * authorised users
+   *
+   * @param to_ The address the token is moving to
+   * @param tokenId_ The token Id being moved.
+   * @param auth_ Whether auth is checked.
+   */
   function _update(
-    address to,
-    uint256 tokenId,
-    address auth
+    address to_,
+    uint256 tokenId_,
+    address auth_
   ) internal override returns (address) {
     // Updates can only be made by holders of either the ADMIN_ROLE or the SUPER_USER_ROLE
     // Only ADMIN_ROLE holders can mint, burn, or revoke (transfer SBTs held by other holders). The
     // SUPER_USER_ROLE is allowed access to the _update method, and therefore can transfer SBTs that
     // they hold themselves.
-    if (
-      !hasRole(ADMIN_ROLE, msg.sender) && !hasRole(SUPER_USER_ROLE, msg.sender)
-    ) {
-      revert("Insufficient authority");
-    }
-
-    return super._update(to, tokenId, auth);
+    _checkTransferRoles();
+    return super._update(to_, tokenId_, auth_);
   }
 
+  /**
+   * @dev _storage: Return the storage slot
+   *
+   * @return $ The slot
+   */
   function _storage() private pure returns (SBTStorage storage $) {
     assembly {
       $.slot := storageLocation
@@ -312,7 +360,18 @@ contract SBTUpgradeable is
   }
 
   /**
-   * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+   * @dev _checkTransferRoles: Revert if the sender does not have the right role.
+   */
+  function _checkTransferRoles() internal view {
+    if (
+      !hasRole(ADMIN_ROLE, msg.sender) && !hasRole(SUPER_USER_ROLE, msg.sender)
+    ) {
+      revert("Insufficient authority");
+    }
+  }
+
+  /**
+   * @dev _baseURI: Base URI for computing {tokenURI}. If set, the resulting URI for each
    * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
    * by default, can be overridden in child contracts.
    */
@@ -320,6 +379,9 @@ contract SBTUpgradeable is
     return _storage().baseURI;
   }
 
+  /**
+   * @dev _authorizeUpgrade: Control the circumstances of an upgrade.
+   */
   function _authorizeUpgrade(address) internal override onlyRole(UPGRADE_ROLE) {
     if (!_storage().upgradeApproved) {
       revert("Upgrade not approved");

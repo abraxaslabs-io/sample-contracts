@@ -1,4 +1,4 @@
-import { ethers } from "hardhat"
+import { upgrades } from "hardhat"
 import { AddressLike, Signer } from "ethers"
 import { expect } from "chai"
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers"
@@ -19,13 +19,11 @@ describe.only("SBT", function () {
   let holder4: AddressLike
   let holder5: AddressLike
   let holder6: AddressLike
-  let holder7: AddressLike
-  let holder8: AddressLike
-  let holder9: AddressLike
   let standardUser: Signer
   let standardUserAddr: AddressLike
   let random: Signer
   let hhSBT: SBTUpgradeable
+  let hhSBTUpgrade: SBTUpgradeable
 
   before(async function () {
     const fixture = await loadFixture(deployFixture)
@@ -40,15 +38,13 @@ describe.only("SBT", function () {
     standardUserAddr = await standardUser.getAddress()
     random = fixture.addr8
     hhSBT = fixture.hhSBT
+    hhSBTUpgrade = fixture.hhSBTUpgrade
     holder1 = await (fixture.addrs[0] as Signer).getAddress()
     holder2 = await (fixture.addrs[1] as Signer).getAddress()
     holder3 = await (fixture.addrs[2] as Signer).getAddress()
     holder4 = await (fixture.addrs[3] as Signer).getAddress()
     holder5 = await (fixture.addrs[4] as Signer).getAddress()
     holder6 = await (fixture.addrs[5] as Signer).getAddress()
-    holder7 = await (fixture.addrs[6] as Signer).getAddress()
-    holder8 = await (fixture.addrs[7] as Signer).getAddress()
-    holder9 = await (fixture.addrs[8] as Signer).getAddress()
   })
 
   context("Deployment", function () {
@@ -551,6 +547,104 @@ describe.only("SBT", function () {
         await expect(
           hhSBT.connect(superUser).burn(9),
         ).to.be.revertedWithCustomError(hhSBT, "ERC721InsufficientApproval")
+      })
+    })
+  })
+
+  context("Upgrades", function () {
+    describe("Upgrading the Implementation contract", function () {
+      let sbtUpgradeAddress: AddressLike
+      let sbtAddressBefore: AddressLike
+      let sbtImplementationBefore: AddressLike
+      let sbtAddressAfter: AddressLike
+      let sbtImplementationAfter: AddressLike
+
+      before(async function () {
+        sbtUpgradeAddress = await hhSBTUpgrade.getAddress()
+      })
+
+      it("Log addresses", async () => {
+        sbtAddressBefore = await hhSBT.getAddress()
+        console.log("          -> SBT address: ", sbtAddressBefore)
+        sbtImplementationBefore =
+          await upgrades.erc1967.getImplementationAddress(
+            sbtAddressBefore as string,
+          )
+        console.log(
+          "          -> Implementation address: ",
+          sbtImplementationBefore,
+        )
+      })
+
+      it("Check version", async () => {
+        expect(await hhSBT.version()).to.equal("1.0")
+      })
+
+      it("Random cannot upgrade the implementation contract", async () => {
+        await expect(
+          hhSBT.connect(random).upgradeToAndCall(sbtUpgradeAddress, "0x"),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Owner cannot upgrade the implementation contract", async () => {
+        await expect(
+          hhSBT.connect(owner).upgradeToAndCall(sbtUpgradeAddress, "0x"),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Admin cannot upgrade the implementation contract", async () => {
+        await expect(
+          hhSBT.connect(admin1).upgradeToAndCall(sbtUpgradeAddress, "0x"),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Upgrade admin cannot upgrade the implementation contract without prior approval", async () => {
+        await expect(
+          hhSBT.connect(upgradeAdmin).upgradeToAndCall(sbtUpgradeAddress, "0x"),
+        ).to.be.revertedWith("Upgrade not approved")
+      })
+
+      it("Owner can approve upgrade", async () => {
+        await expect(hhSBT.connect(owner).setUpgradeApproved(true)).to.not.be
+          .reverted
+      })
+
+      it("Upgrade admin can upgrade the implementation", async () => {
+        await expect(
+          hhSBT.connect(upgradeAdmin).upgradeToAndCall(sbtUpgradeAddress, "0x"),
+        ).to.not.be.reverted
+      })
+
+      it("Log addresses", async () => {
+        sbtAddressAfter = await hhSBT.getAddress()
+        console.log("          -> SBT address: ", sbtAddressAfter)
+        sbtImplementationAfter =
+          await upgrades.erc1967.getImplementationAddress(
+            sbtAddressAfter as string,
+          )
+        console.log(
+          "          -> Implementation address: ",
+          sbtImplementationAfter,
+        )
+      })
+
+      it("Check addresses", async () => {
+        expect(sbtAddressBefore).to.equal(sbtAddressAfter)
+        expect(sbtImplementationBefore).to.not.equal(sbtImplementationAfter)
+        expect(sbtImplementationAfter).to.equal(sbtUpgradeAddress)
+      })
+
+      it("Check version is upgraded", async () => {
+        expect(await hhSBT.version()).to.equal("2.0")
       })
     })
   })

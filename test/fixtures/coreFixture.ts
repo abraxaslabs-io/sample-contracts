@@ -3,6 +3,7 @@ import { Signer, AddressLike } from "ethers"
 import { MockERC20 } from "../../typechain/contracts/mock/token/MockERC20"
 import { Staking } from "../../typechain/contracts/finance/Staking"
 import { SBTUpgradeable } from "../../typechain/contracts/token/SBTUpgradeable/SBTUpgradeable"
+import { MockSBTUpgrade } from "../../typechain/contracts/mock/sbt/MockSBTUpgrade"
 
 export type { MockERC20, Staking, SBTUpgradeable }
 
@@ -30,6 +31,7 @@ let hhMockERC20Address: AddressLike
 let hhStaking: Staking
 let hhStakingAddress: AddressLike
 let hhSBT: SBTUpgradeable
+let hhSBTUpgrade: MockSBTUpgrade
 
 const minStake = ethers.parseEther("1000")
 const maxStake = ethers.parseEther("1000000")
@@ -81,6 +83,9 @@ export async function deployFixture() {
     [address5],
   ])) as any as SBTUpgradeable
 
+  const mockSBTUpgrade = await ethers.getContractFactory("MockSBTUpgrade")
+  hhSBTUpgrade = await mockSBTUpgrade.deploy()
+
   return {
     owner,
     addr1,
@@ -109,5 +114,6 @@ export async function deployFixture() {
     maxStake,
     durations,
     hhSBT,
+    hhSBTUpgrade,
   }
 }
