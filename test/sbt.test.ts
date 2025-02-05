@@ -72,6 +72,10 @@ describe.only("SBT", function () {
       it("baseURI", async () => {
         expect(await hhSBT.baseURI()).to.equal("https://something.com")
       })
+
+      it("owner", async () => {
+        expect(await hhSBT.owner()).to.equal(await owner.getAddress())
+      })
     })
   })
 
@@ -210,6 +214,56 @@ describe.only("SBT", function () {
 
         await expect(hhSBT.connect(owner).setUpgradeApproved(false)).to.not.be
           .reverted
+      })
+    })
+
+    describe("setNonFunctionalOwner", function () {
+      before(async function () {
+        //
+      })
+
+      it("owner is as expected", async () => {
+        expect(await hhSBT.owner()).to.equal(await owner.getAddress())
+      })
+
+      it("Random address cannot call", async () => {
+        await expect(
+          hhSBT.connect(random).setNonFunctionalOwner(holder1),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Admin address 1 cannot call", async () => {
+        await expect(
+          hhSBT.connect(admin1).setNonFunctionalOwner(holder1),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Admin address 2 cannot call", async () => {
+        await expect(
+          hhSBT.connect(admin1).setNonFunctionalOwner(holder1),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Owner address can call", async () => {
+        await expect(hhSBT.connect(owner).setNonFunctionalOwner(holder1)).to.not
+          .be.reverted
+      })
+
+      it("owner is as expected", async () => {
+        expect(await hhSBT.owner()).to.equal(holder1)
+
+        await expect(
+          hhSBT.connect(owner).setNonFunctionalOwner(await owner.getAddress()),
+        ).to.not.be.reverted
       })
     })
   })

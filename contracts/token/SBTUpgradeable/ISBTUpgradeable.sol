@@ -46,6 +46,7 @@ pragma solidity 0.8.28;
 
 interface ISBTUpgradeable {
   struct SBTStorage {
+    address owner;
     string baseURI;
     uint256 nextId;
     bool individualURI;
@@ -62,6 +63,7 @@ interface ISBTUpgradeable {
   event IndividualURIUpdated(bool oldIndividualURI, bool newIndividualURI);
   event BatchMintComplete(uint256 mintedCount);
   event BatchTransferComplete(uint256 transferredCount);
+  event NonFunctionalOwnerUpdated(address oldOwner, address newOwner);
   event UpgradeApprovedUpdated(bool oldApproved, bool newApproved);
   event URIUpdated(string oldURI, string newURI);
 

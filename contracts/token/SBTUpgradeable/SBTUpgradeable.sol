@@ -95,9 +95,13 @@ contract SBTUpgradeable is
     __AccessControl_init();
     __ERC721_init(name_, symbol_);
 
-    _storage().baseURI = baseURI_;
+    SBTStorage storage $ = _storage();
+
+    $.baseURI = baseURI_;
 
     _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+    $.owner = owner_;
+
     _grantRole(UPGRADE_ROLE, upgradeAdmin_);
 
     for (uint256 i = 0; i < adminAddresses_.length; i++) {
@@ -109,9 +113,9 @@ contract SBTUpgradeable is
     }
 
     // Start tokenIds at 1
-    _storage().nextId = 1;
+    $.nextId = 1;
 
-    _storage().individualURI = individualURI_;
+    $.individualURI = individualURI_;
   }
 
   /**
@@ -160,6 +164,40 @@ contract SBTUpgradeable is
    */
   function baseURI() external view returns (string memory baseURI_) {
     return _baseURI();
+  }
+
+  /**
+   * @dev owner: A single owner storage variable is provided on this contract
+   * to allow compatibility with off-chain platforms that assume a contract with
+   * permissions will have an owner(). This can prove a problem for contracts using
+   * access control that want to take actions on those platforms. It is controlled
+   * by the DEFAULT_ADMIN_ROLE.
+   *
+   * ** It has no permissions on this contract **
+   *
+   * @return owner_ The value of the non functional owner.
+   */
+  function owner() public view virtual returns (address owner_) {
+    return _storage().owner;
+  }
+
+  /**
+   * @dev setNonFunctionalOwner: A single owner storage variable is provided on this contract
+   * to allow compatibility with off-chain platforms that assume a contract with
+   * permissions will have an owner(). This can prove a problem for contracts using
+   * access control that want to take actions on those platforms. It is controlled
+   * by the DEFAULT_ADMIN_ROLE.
+   *
+   * ** It has no permissions on this contract **
+   *
+   * @param newOwner_ The new address for the owner storage var.
+   */
+  function setNonFunctionalOwner(
+    address newOwner_
+  ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    address oldOwner = _storage().owner;
+    _storage().owner = newOwner_;
+    emit NonFunctionalOwnerUpdated(oldOwner, newOwner_);
   }
 
   /**
