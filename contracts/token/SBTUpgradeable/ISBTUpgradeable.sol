@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 /**
- * @title ISBT.sol.
+ * @title ISBTUpgradeable.sol.
  *
  * @notice Interface for a simple SBT (soul bound token) that is upgradeable
  *
@@ -35,10 +35,11 @@
 /// @dev Set the compiler version. It is best practice to fix to a version, if possible.
 pragma solidity 0.8.28;
 
-interface ISBT {
+interface ISBTUpgradeable {
   struct SBTStorage {
     string baseURI;
     uint256 nextId;
+    bool individualURI;
   }
 
   struct SBTTransfer {
@@ -54,4 +55,6 @@ interface ISBT {
   event BatchTransferComplete(uint256 transferredCount);
 
   event URIUpdated(string oldURI, string newURI);
+
+  event IndividualURIUpdated(bool oldIndividualURI, bool newIndividualURI);
 }

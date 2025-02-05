@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox"
 import "@nomicfoundation/hardhat-verify"
 import "solidity-docgen"
 import "dotenv/config"
+import "@openzeppelin/hardhat-upgrades"
 
 // Private keys are needed to interact with chains, most commonly for deploying
 // contracts using deployment scripts. These private keys should NOT be used for
