@@ -40,6 +40,7 @@ interface ISBTUpgradeable {
     string baseURI;
     uint256 nextId;
     bool individualURI;
+    bool upgradeApproved;
   }
 
   struct SBTTransfer {
@@ -57,4 +58,9 @@ interface ISBTUpgradeable {
   event URIUpdated(string oldURI, string newURI);
 
   event IndividualURIUpdated(bool oldIndividualURI, bool newIndividualURI);
+
+  event UpgradeApprovedUpdated(
+    bool oldUpgradeApproved,
+    bool newUpgradeApproved
+  );
 }

@@ -74,8 +74,11 @@ export async function deployFixture() {
     "Test SBT",
     "TSTSBT",
     "https://something.com",
+    true,
     address1,
+    address4,
     [address2, address3],
+    [address5],
   ])) as any as SBTUpgradeable
 
   return {
