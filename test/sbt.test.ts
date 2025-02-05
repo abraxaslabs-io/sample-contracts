@@ -6,22 +6,18 @@ import { deployFixture } from "./fixtures/coreFixture"
 import { SBTUpgradeable } from "./fixtures/coreFixture"
 
 describe.only("SBT", function () {
-  let addr1: Signer
-  let addr2: Signer
-  let addr3: Signer
-  let addr8: Signer
-  let address1: AddressLike
-  let address2: AddressLike
+  let admin: Signer
+  let operator1: Signer
+  let operator2: Signer
+  let random: Signer
   let hhSBT: SBTUpgradeable
 
   before(async function () {
     const fixture = await loadFixture(deployFixture)
-    addr1 = fixture.addr1
-    addr2 = fixture.addr2
-    addr3 = fixture.addr3
-    addr8 = fixture.addr8
-    address1 = fixture.address1
-    address2 = fixture.address2
+    admin = fixture.addr1
+    operator1 = fixture.addr2
+    operator2 = fixture.addr3
+    random = fixture.addr8
     hhSBT = fixture.hhSBT
   })
 
@@ -48,6 +44,50 @@ describe.only("SBT", function () {
       })
 
       it("baseURI", async () => {
+        expect(await hhSBT.baseURI()).to.equal("https://something.com")
+      })
+    })
+  })
+
+  context("Configuration", function () {
+    describe("setURI", function () {
+      before(async function () {
+        //
+      })
+
+      it("Random address cannot call", async () => {
+        await expect(
+          hhSBT.connect(random).setURI("something else"),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Admin address cannot call", async () => {
+        await expect(
+          hhSBT.connect(admin).setURI("something else"),
+        ).to.be.revertedWithCustomError(
+          hhSBT,
+          "AccessControlUnauthorizedAccount",
+        )
+      })
+
+      it("Operator address 1 can call", async () => {
+        await expect(hhSBT.connect(operator1).setURI("https://other.com")).to
+          .not.be.reverted
+      })
+
+      it("URI is updated", async () => {
+        expect(await hhSBT.baseURI()).to.equal("https://other.com")
+      })
+
+      it("Operator address 2 can call", async () => {
+        await expect(hhSBT.connect(operator2).setURI("https://something.com"))
+          .to.not.be.reverted
+      })
+
+      it("URI is updated", async () => {
         expect(await hhSBT.baseURI()).to.equal("https://something.com")
       })
     })
