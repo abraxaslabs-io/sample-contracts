@@ -37,6 +37,12 @@ const worldSepolia = {
   rpc: `https://worldchain-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://sepolia.worldscan.org/",
 }
+const bartio = {
+  chainId: 80084,
+  rpc: `https://berachain-bartio.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+  scanner: "https://bartio.beratrail.io/",
+  scanAPI: "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan",
+}
 
 const config: HardhatUserConfig = {
   // Type chain generates types from contracts for use with ts.
@@ -68,6 +74,7 @@ const config: HardhatUserConfig = {
       sepolia: ETHERSCAN_API_KEY,
       worldSepolia: ETHERSCAN_API_KEY,
       world: ETHERSCAN_API_KEY,
+      bartio: "berachain_bartio", // apiKey is not required, just set a placeholder
     },
     customChains: [
       {
@@ -84,6 +91,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: worldSepolia.rpc,
           browserURL: worldSepolia.scanner,
+        },
+      },
+      {
+        network: "bartio",
+        chainId: bartio.chainId,
+        urls: {
+          apiURL: bartio.scanAPI,
+          browserURL: bartio.scanner,
         },
       },
     ],
@@ -115,6 +130,11 @@ const config: HardhatUserConfig = {
       worldSepolia: {
         url: worldSepolia.rpc,
         chainId: worldSepolia.chainId,
+        accounts: [`0x${TESTNET_PRIVATE_KEY}`],
+      },
+      bartio: {
+        url: bartio.rpc,
+        chainId: bartio.chainId,
         accounts: [`0x${TESTNET_PRIVATE_KEY}`],
       },
     }),
