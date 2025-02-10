@@ -15,6 +15,7 @@ const ALCHEMY_KEY = process.env.ALCHEMY_KEY
 
 // API keys for verifying contracts on chains.
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
+const BERASCAN_API_KEY = process.env.BERASCAN_API_KEY || ""
 
 // Chain definitions.
 const mainnet = {
@@ -42,6 +43,12 @@ const bartio = {
   rpc: `https://berachain-bartio.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://bartio.beratrail.io/",
   scanAPI: "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan",
+}
+const berachain = {
+  chainId: 80094,
+  rpc: `https://rpc.berachain.com`,
+  scanner: "https://berascan.com/",
+  scanAPI: "https://api.berascan.com/api",
 }
 
 const config: HardhatUserConfig = {
@@ -75,6 +82,7 @@ const config: HardhatUserConfig = {
       worldSepolia: ETHERSCAN_API_KEY,
       world: ETHERSCAN_API_KEY,
       bartio: "berachain_bartio", // apiKey is not required, just set a placeholder
+      berachain: BERASCAN_API_KEY,
     },
     customChains: [
       {
@@ -101,6 +109,14 @@ const config: HardhatUserConfig = {
           browserURL: bartio.scanner,
         },
       },
+      {
+        network: "berachain",
+        chainId: berachain.chainId,
+        urls: {
+          apiURL: berachain.scanAPI,
+          browserURL: berachain.scanner,
+        },
+      },
     ],
   },
 
@@ -118,6 +134,11 @@ const config: HardhatUserConfig = {
       world: {
         url: world.rpc,
         chainId: world.chainId,
+        accounts: [`0x${MAINNET_PRIVATE_KEY}`],
+      },
+      berachain: {
+        url: berachain.rpc,
+        chainId: berachain.chainId,
         accounts: [`0x${MAINNET_PRIVATE_KEY}`],
       },
     }),
