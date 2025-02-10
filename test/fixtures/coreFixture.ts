@@ -1,9 +1,11 @@
-import { ethers } from "hardhat"
+import { ethers, upgrades } from "hardhat"
 import { Signer, AddressLike } from "ethers"
 import { MockERC20 } from "../../typechain/contracts/mock/token/MockERC20"
 import { Staking } from "../../typechain/contracts/finance/Staking"
+import { SBTUpgradeable } from "../../typechain/contracts/token/SBTUpgradeable/SBTUpgradeable"
+import { MockSBTUpgrade } from "../../typechain/contracts/mock/sbt/MockSBTUpgrade"
 
-export type { MockERC20, Staking }
+export type { MockERC20, Staking, SBTUpgradeable }
 
 let owner: Signer
 let addr1: Signer
@@ -28,6 +30,8 @@ let hhMockERC20: MockERC20
 let hhMockERC20Address: AddressLike
 let hhStaking: Staking
 let hhStakingAddress: AddressLike
+let hhSBT: SBTUpgradeable
+let hhSBTUpgrade: MockSBTUpgrade
 
 const minStake = ethers.parseEther("1000")
 const maxStake = ethers.parseEther("1000000")
@@ -67,6 +71,21 @@ export async function deployFixture() {
 
   hhStakingAddress = await hhStaking.getAddress()
 
+  const sbt = await ethers.getContractFactory("SBTUpgradeable")
+  hhSBT = (await upgrades.deployProxy(sbt, [
+    "Test SBT",
+    "TSTSBT",
+    "https://something.com",
+    true,
+    address1,
+    address4,
+    [address2, address3],
+    [address5],
+  ])) as any as SBTUpgradeable
+
+  const mockSBTUpgrade = await ethers.getContractFactory("MockSBTUpgrade")
+  hhSBTUpgrade = await mockSBTUpgrade.deploy()
+
   return {
     owner,
     addr1,
@@ -94,5 +113,7 @@ export async function deployFixture() {
     minStake,
     maxStake,
     durations,
+    hhSBT,
+    hhSBTUpgrade,
   }
 }

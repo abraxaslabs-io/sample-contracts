@@ -3,6 +3,7 @@ import "@nomicfoundation/hardhat-toolbox"
 import "@nomicfoundation/hardhat-verify"
 import "solidity-docgen"
 import "dotenv/config"
+import "@openzeppelin/hardhat-upgrades"
 
 // Private keys are needed to interact with chains, most commonly for deploying
 // contracts using deployment scripts. These private keys should NOT be used for
@@ -14,6 +15,7 @@ const ALCHEMY_KEY = process.env.ALCHEMY_KEY
 
 // API keys for verifying contracts on chains.
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || ""
+const BERASCAN_API_KEY = process.env.BERASCAN_API_KEY || ""
 
 // Chain definitions.
 const mainnet = {
@@ -35,6 +37,18 @@ const worldSepolia = {
   chainId: 4801,
   rpc: `https://worldchain-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
   scanner: "https://sepolia.worldscan.org/",
+}
+const bartio = {
+  chainId: 80084,
+  rpc: `https://berachain-bartio.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+  scanner: "https://bartio.beratrail.io/",
+  scanAPI: "https://api.routescan.io/v2/network/testnet/evm/80084/etherscan",
+}
+const berachain = {
+  chainId: 80094,
+  rpc: `https://rpc.berachain.com`,
+  scanner: "https://berascan.com/",
+  scanAPI: "https://api.berascan.com/api",
 }
 
 const config: HardhatUserConfig = {
@@ -67,6 +81,8 @@ const config: HardhatUserConfig = {
       sepolia: ETHERSCAN_API_KEY,
       worldSepolia: ETHERSCAN_API_KEY,
       world: ETHERSCAN_API_KEY,
+      bartio: "berachain_bartio", // apiKey is not required, just set a placeholder
+      berachain: BERASCAN_API_KEY,
     },
     customChains: [
       {
@@ -83,6 +99,22 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: worldSepolia.rpc,
           browserURL: worldSepolia.scanner,
+        },
+      },
+      {
+        network: "bartio",
+        chainId: bartio.chainId,
+        urls: {
+          apiURL: bartio.scanAPI,
+          browserURL: bartio.scanner,
+        },
+      },
+      {
+        network: "berachain",
+        chainId: berachain.chainId,
+        urls: {
+          apiURL: berachain.scanAPI,
+          browserURL: berachain.scanner,
         },
       },
     ],
@@ -104,6 +136,11 @@ const config: HardhatUserConfig = {
         chainId: world.chainId,
         accounts: [`0x${MAINNET_PRIVATE_KEY}`],
       },
+      berachain: {
+        url: berachain.rpc,
+        chainId: berachain.chainId,
+        accounts: [`0x${MAINNET_PRIVATE_KEY}`],
+      },
     }),
     ...(TESTNET_PRIVATE_KEY && {
       sepolia: {
@@ -114,6 +151,11 @@ const config: HardhatUserConfig = {
       worldSepolia: {
         url: worldSepolia.rpc,
         chainId: worldSepolia.chainId,
+        accounts: [`0x${TESTNET_PRIVATE_KEY}`],
+      },
+      bartio: {
+        url: bartio.rpc,
+        chainId: bartio.chainId,
         accounts: [`0x${TESTNET_PRIVATE_KEY}`],
       },
     }),

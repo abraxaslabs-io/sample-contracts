@@ -1,13 +1,21 @@
 {
   "cSpell.words": [
+    "abraxas",
+    "concat",
+    "IERC",
+    "Initializable",
+    "keccak",
     "nomicfoundation",
     "Reentrancy",
     "Reentrant",
     "SLOAD",
+    "struct",
     "TSTERC",
     "Unstake",
     "unstaked",
     "Unstaking",
+    "UUPS",
     "vars"
-  ]
+  ],
+  "cSpell.ignoreWords": ["ISBT", "TSTSBT", "addrs"]
 }
